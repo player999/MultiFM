@@ -25,26 +25,26 @@ namespace DSP
         NUTTAL,
     };
 
-    class FirFilter
+    template <class T> class FirFilter
     {
         public:
-            FirFilter(FilterType ft, float fs, float f1, float f2, uint32_t order);
-            static Error getWindow(WindowFunction window_type, uint32_t order, float *coefficients);
-            Error execute(float *input_i, float *input_q, float *output_i, float *output_q, size_t length);
-            Error executeRealFilter(float *input_i, float *input_q, float *output_i, float *output_q, size_t length);
+            FirFilter(FilterType ft, T fs, T f1, T f2, uint32_t order);
+            static Error getWindow(WindowFunction window_type, uint32_t order, T *coefficients);
+            Error execute(T *input_i, T *input_q, T *output_i, T *output_q, size_t length);
+            Error executeRealFilter(T *input_i, T *input_q, T *output_i, T *output_q, size_t length);
             uint32_t order;
-            float sampling_rate;
-            float f1, f2;
+            T sampling_rate;
+            T f1, f2;
             FilterType filter_type;
-            std::vector<float> window;
-            std::vector<float> coefficients;
+            std::vector<T> window;
+            std::vector<T> coefficients;
     };
 
-    class LpFirFilter: public FirFilter
+    template <class T> class LpFirFilter: public FirFilter<T>
     {
         public:
-            LpFirFilter(float fs, float f, uint32_t order);
-            Error calculateCoefficients(uint32_t order, float f, float *window, float *coefficients);
+            LpFirFilter(T fs, T f, uint32_t order);
+            Error calculateCoefficients(uint32_t order, T f, T *window, T *coefficients);
     };
 };
 

@@ -5,7 +5,7 @@
 
 TEST(FilterTest, Convolution3) {
     DSP::Error err;
-    DSP::LpFirFilter lp(10.0f, 5.0f, 3);
+    DSP::LpFirFilter<float> lp(10.0f, 5.0f, 3);
     float out_i[10], out_q[10];
     float in_i[10], in_q[10];
     memset(in_i, 0, sizeof(in_i));
@@ -39,7 +39,7 @@ TEST(FilterTest, Convolution3) {
 
 TEST(FilterTest, Convolution4) {
     DSP::Error err;
-    DSP::LpFirFilter lp(10.0f, 5.0f, 4);
+    DSP::LpFirFilter<float> lp(10.0f, 5.0f, 4);
     float out_i[10], out_q[10];
     float in_i[10], in_q[10];
     memset(in_i, 0, sizeof(in_i));

@@ -7,7 +7,7 @@
 
 using namespace DSP;
 
-FirFilter::FirFilter(FilterType ft, float fs, float f1, float f2, uint32_t order):
+template <class T> FirFilter<T>::FirFilter(FilterType ft, T fs, T f1, T f2, uint32_t order):
     f1(f1), f2(f2), order(order), filter_type(ft), sampling_rate(fs)
 {
     Error err;
@@ -17,14 +17,14 @@ FirFilter::FirFilter(FilterType ft, float fs, float f1, float f2, uint32_t order
     coefficients.resize(order);
 }
 
-Error FirFilter::getWindow(WindowFunction window_type, uint32_t order, float *coefficients)
+template <class T> Error FirFilter<T>::getWindow(WindowFunction window_type, uint32_t order, T *coefficients)
 {
-    std::function<float(uint32_t)> window_functor;
+    std::function<T(uint32_t)> window_functor;
     if(WindowFunction::HAMMING == window_type)
     {
         window_functor = [order](uint32_t i) {
-            float a = 2.0 * M_PI * i / (order - 1);
-            return 0.54f - 0.46f * std::cos(a);
+            T a = 2.0 * M_PI * i / (order - 1);
+            return 0.54 - 0.46 * std::cos(a);
         };
     }
     else
@@ -40,7 +40,7 @@ Error FirFilter::getWindow(WindowFunction window_type, uint32_t order, float *co
     return Error::SUCCESS;
 }
 
-Error FirFilter::execute(float *input_i, float *input_q, float *output_i, float *output_q, size_t length)
+template<class T> Error FirFilter<T>::execute(T *input_i, T *input_q, T *output_i, T *output_q, size_t length)
 {
     if(filter_type == FilterType::FILTER_TYPE_LP)
     {
@@ -49,7 +49,7 @@ Error FirFilter::execute(float *input_i, float *input_q, float *output_i, float 
     return Error::SUCCESS;
 }
 
-Error FirFilter::executeRealFilter(float *input_i, float *input_q, float *output_i, float *output_q, size_t length)
+template <class T> Error FirFilter<T>::executeRealFilter(T *input_i, T *input_q, T *output_i, T *output_q, size_t length)
 {
     int32_t ncoef;
     if((coefficients.size() % 2) == 0)
@@ -61,14 +61,14 @@ Error FirFilter::executeRealFilter(float *input_i, float *input_q, float *output
         ncoef = ((coefficients.size() / 2) + 1);
     }
 
-    std::vector<float> c(coefficients);
+    std::vector<T> c(coefficients);
     std::reverse(c.begin(), c.end());
 
     /* Convolve first part */
     for(int32_t ii = 0; ii < (coefficients.size() - ncoef); ii++)
     {
-        output_i[ii] = 0.0f;
-        output_q[ii] = 0.0f;
+        output_i[ii] = 0.0;
+        output_q[ii] = 0.0;
         for(int32_t jj = -ii; jj < ncoef; jj++)
         {
             output_i[ii] += (input_i[ii + jj] * c[jj + ncoef]);
@@ -79,8 +79,8 @@ Error FirFilter::executeRealFilter(float *input_i, float *input_q, float *output
     /* Middle */
     for(int32_t ii = (coefficients.size() - ncoef); ii < length - ncoef + 1; ii++)
     {
-        output_i[ii] = 0.0f;
-        output_q[ii] = 0.0f;
+        output_i[ii] = 0.0;
+        output_q[ii] = 0.0;
         for(int32_t jj = -ncoef; jj < ncoef; jj++)
         {
             output_i[ii] += (input_i[ii + jj] * c[jj + ncoef]);
@@ -91,8 +91,8 @@ Error FirFilter::executeRealFilter(float *input_i, float *input_q, float *output
     /* Convolve last part */
     for(int32_t ii = length - ncoef + 1; ii < length; ii++)
     {
-        output_i[ii] = 0.0f;
-        output_q[ii] = 0.0f;
+        output_i[ii] = 0.0;
+        output_q[ii] = 0.0;
         for(int32_t jj = -ncoef; jj < ncoef - ((int32_t)length - ii); jj++)
         {
             output_i[ii] += (input_i[ii + jj] * c[jj + ncoef]);
@@ -103,25 +103,25 @@ Error FirFilter::executeRealFilter(float *input_i, float *input_q, float *output
     return Error::SUCCESS;
 }
 
-LpFirFilter::LpFirFilter(float fs, float f, uint32_t order):
-    FirFilter(FILTER_TYPE_LP, fs, f, 0.0f, order)
+template <class T> LpFirFilter<T>::LpFirFilter(T fs, T f, uint32_t order):
+    FirFilter<T>(FILTER_TYPE_LP, fs, f, 0.0f, order)
 {
     Error err;
-    err = calculateCoefficients(order, f, window.data(), coefficients.data());
+    err = calculateCoefficients(order, f, this->window.data(), this->coefficients.data());
     if(Error::SUCCESS != err) std::__throw_runtime_error("Failed to calculate filter coefficients");
 }
 
-Error LpFirFilter::calculateCoefficients(uint32_t order, float f, float *window, float *coefficients)
+template <class T> Error LpFirFilter<T>::calculateCoefficients(uint32_t order, T f, T *window, T *coefficients)
 {
     if( order == 1 )
     {
-        coefficients[0] = 1.0f;
+        coefficients[0] = 1.0;
         return Error::SUCCESS;
     }
     uint32_t n2 = order / 2;
 
-    float w = 2.0 * M_PI * f1 / sampling_rate;
-    float sum = 0;
+    T w = 2.0 * M_PI * this->f1 / this->sampling_rate;
+    T sum = 0;
 
     for(uint32_t ii = 0; ii < order; ii++ ) {
             int32_t d = ii - n2;
@@ -136,3 +136,8 @@ Error LpFirFilter::calculateCoefficients(uint32_t order, float f, float *window,
 
     return Error::SUCCESS;
 }
+
+template class LpFirFilter<float>;
+template class LpFirFilter<double>;
+template class FirFilter<float>;
+template class FirFilter<double>;
