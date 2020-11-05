@@ -4,6 +4,11 @@
 #include <functional>
 #include <filter.hpp>
 
+extern "C"
+{
+    #include <filter.h>
+}
+
 
 using namespace DSP;
 
@@ -141,3 +146,24 @@ template class LpFirFilter<float>;
 template class LpFirFilter<double>;
 template class FirFilter<float>;
 template class FirFilter<double>;
+
+extern "C"
+{
+    int filterDbl(uint8_t ftype, uint32_t order, double fs, double f, double *ii, double *iq, double *oi, double *oq, size_t len)
+    {
+        if(FILTER_C_TYPE_LP == ftype)
+        {
+            LpFirFilter<double> lp(fs, f, order);
+            if(lp.execute(ii, iq, oi, oq, len))
+            {
+                return DSP::Error::FAIL;
+            }
+            return DSP::Error::SUCCESS;
+        }
+        else
+        {
+            /* Filter type is not supported */
+            return DSP::Error::FAIL;
+        }
+    }
+}
