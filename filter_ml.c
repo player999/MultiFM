@@ -10,12 +10,14 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     uint8_t filter_type;
     uint32_t order = 0;
     double fs = 0, f1 = 0, f2 = 0;
+    uint32_t decimation = 1;
     uint8_t offset = 0;
+    size_t olen;
 
     /* check for proper number of arguments */
-    if((nrhs != 6) && (nrhs != 7))
+    if((nrhs < 6) || (nrhs > 9))
     {
-        mexErrMsgIdAndTxt("CuteDSP:Filter:nargs", "Six or seven inputs required.");
+        mexErrMsgIdAndTxt("CuteDSP:Filter:nargs", "6..9 inputs required.");
         goto L_exit;
     }
 
@@ -53,17 +55,17 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
         if((FILTER_C_TYPE_LP == filter_type) || (FILTER_C_TYPE_HP == filter_type))
         {
-            if(nrhs != 6)
+            if((nrhs != 6) && (nrhs != 7))
             {
-                mexErrMsgIdAndTxt("CuteDSP:Filter:nargs", "Six inputs required.");
+                mexErrMsgIdAndTxt("CuteDSP:Filter:nargs", "Six or seven inputs required.");
                 goto L_exit;
             }
         }
         else
         {
-            if(nrhs != 7)
+            if((nrhs != 7) && (nrhs != 8))
             {
-                mexErrMsgIdAndTxt("CuteDSP:Filter:nargs", "Seven inputs required.");
+                mexErrMsgIdAndTxt("CuteDSP:Filter:nargs", "Seven or eight inputs required.");
                 goto L_exit;
             }
         }
@@ -122,6 +124,48 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         }
     }
 
+    /*Decimation*/
+    if (mxIsDouble(prhs[offset]) && (mxGetNumberOfElements(prhs[offset]) == 1))
+    {
+        decimation = (uint32_t)mxGetScalar(prhs[offset]);
+        offset++;
+        if((FILTER_C_TYPE_LP == filter_type) || (FILTER_C_TYPE_HP == filter_type))
+        {
+            if(nrhs != 7)
+            {
+                mexErrMsgIdAndTxt("CuteDSP:Filter:nargs", "Seven inputs required.");
+                goto L_exit;
+            }
+        }
+        else
+        {
+            if(nrhs != 8)
+            {
+                mexErrMsgIdAndTxt("CuteDSP:Filter:nargs", "Eight inputs required.");
+                goto L_exit;
+            }
+        }
+    }
+    else
+    {
+        if((FILTER_C_TYPE_LP == filter_type) || (FILTER_C_TYPE_HP == filter_type))
+        {
+            if(nrhs != 8)
+            {
+                mexErrMsgIdAndTxt("CuteDSP:Filter:nargs", "Eight inputs required.");
+                goto L_exit;
+            }
+        }
+        else
+        {
+            if(nrhs != 9)
+            {
+                mexErrMsgIdAndTxt("CuteDSP:Filter:nargs", "Nine inputs required.");
+                goto L_exit;
+            }
+        }
+    }
+
     /* Inputs */
     if(mxGetNumberOfElements(prhs[offset]) != mxGetNumberOfElements(prhs[offset + 1]))
     {
@@ -138,13 +182,14 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     ii = mxGetPr(prhs[offset++]);
     iq = mxGetPr(prhs[offset++]);
 
-    plhs[0] = mxCreateDoubleMatrix(1, len, mxREAL);
-    plhs[1] = mxCreateDoubleMatrix(1, len, mxREAL);
+    olen = len / decimation;
+    plhs[0] = mxCreateDoubleMatrix(1, olen, mxREAL);
+    plhs[1] = mxCreateDoubleMatrix(1, olen, mxREAL);
 
     oi = mxGetPr(plhs[0]);
     oq = mxGetPr(plhs[1]);
     
-    if(filterDbl(filter_type, order, fs, f1, ii, iq, oi, oq, len))
+    if(filterDbl(filter_type, order, fs, f1, ii, iq, oi, oq, decimation, len))
     {
         mexErrMsgIdAndTxt("CuteDSP:Filter:execution", "Failed to run filter");
     }

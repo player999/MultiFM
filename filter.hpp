@@ -31,7 +31,8 @@ namespace DSP
             FirFilter(FilterType ft, T fs, T f1, T f2, uint32_t order);
             static Error getWindow(WindowFunction window_type, uint32_t order, T *coefficients);
             Error execute(T *input_i, T *input_q, T *output_i, T *output_q, size_t length);
-            Error executeRealFilter(T *input_i, T *input_q, T *output_i, T *output_q, size_t length);
+            Error executeDecim(T *input_i, T *input_q, T *output_i, T *output_q, uint32_t decim, size_t length);
+            Error executeRealFilter(T *input_i, T *input_q, T *output_i, T *output_q, uint32_t decimation, size_t length);
             uint32_t order;
             T sampling_rate;
             T f1, f2;

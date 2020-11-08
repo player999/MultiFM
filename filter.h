@@ -8,6 +8,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-int filterDbl(uint8_t ftype, uint32_t order, double fs, double f, double *ii, double *iq, double *oi, double *oq, size_t len);
+int filterDbl(uint8_t ftype, uint32_t order, double fs, double f, double *ii, double *iq, double *oi, double *oq, uint32_t decim, size_t len);
 
 #endif /*_FILTER_H_*/

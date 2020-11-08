@@ -45,18 +45,24 @@ template <class T> Error FirFilter<T>::getWindow(WindowFunction window_type, uin
     return Error::SUCCESS;
 }
 
-template<class T> Error FirFilter<T>::execute(T *input_i, T *input_q, T *output_i, T *output_q, size_t length)
+template<class T> Error FirFilter<T>::executeDecim(T *input_i, T *input_q, T *output_i, T *output_q, uint32_t decimation, size_t length)
 {
     if(filter_type == FilterType::FILTER_TYPE_LP)
     {
-        return executeRealFilter(input_i, input_q, output_i, output_q, length);
+        return executeRealFilter(input_i, input_q, output_i, output_q, decimation, length);
     }
     return Error::SUCCESS;
 }
 
-template <class T> Error FirFilter<T>::executeRealFilter(T *input_i, T *input_q, T *output_i, T *output_q, size_t length)
+template<class T> Error FirFilter<T>::execute(T *input_i, T *input_q, T *output_i, T *output_q, size_t length)
+{
+    return executeDecim(input_i, input_q, output_i, output_q, 1, length);
+}
+
+template <class T> Error FirFilter<T>::executeRealFilter(T *input_i, T *input_q, T *output_i, T *output_q, uint32_t decimation, size_t length)
 {
     int32_t ncoef;
+    size_t ooffset = 0;
     if((coefficients.size() % 2) == 0)
     {
         ncoef = coefficients.size() / 2;
@@ -72,36 +78,48 @@ template <class T> Error FirFilter<T>::executeRealFilter(T *input_i, T *input_q,
     /* Convolve first part */
     for(int32_t ii = 0; ii < (coefficients.size() - ncoef); ii++)
     {
-        output_i[ii] = 0.0;
-        output_q[ii] = 0.0;
-        for(int32_t jj = -ii; jj < ncoef; jj++)
+        if((ii % decimation) == 0)
         {
-            output_i[ii] += (input_i[ii + jj] * c[jj + ncoef]);
-            output_q[ii] += (input_q[ii + jj] * c[jj + ncoef]);
+            output_i[ooffset] = 0.0;
+            output_q[ooffset] = 0.0;
+            for(int32_t jj = -ii; jj < ncoef; jj++)
+            {
+                output_i[ooffset] += (input_i[ii + jj] * c[jj + ncoef]);
+                output_q[ooffset] += (input_q[ii + jj] * c[jj + ncoef]);
+            }
+            ooffset++;
         }
     }
 
     /* Middle */
     for(int32_t ii = (coefficients.size() - ncoef); ii < length - ncoef + 1; ii++)
     {
-        output_i[ii] = 0.0;
-        output_q[ii] = 0.0;
-        for(int32_t jj = -ncoef; jj < ncoef; jj++)
+        if((ii % decimation) == 0)
         {
-            output_i[ii] += (input_i[ii + jj] * c[jj + ncoef]);
-            output_q[ii] += (input_q[ii + jj] * c[jj + ncoef]);
+            output_i[ooffset] = 0.0;
+            output_q[ooffset] = 0.0;
+            for(int32_t jj = -ncoef; jj < ncoef; jj++)
+            {
+                output_i[ooffset] += (input_i[ii + jj] * c[jj + ncoef]);
+                output_q[ooffset] += (input_q[ii + jj] * c[jj + ncoef]);
+            }
+            ooffset++;
         }
     }
 
     /* Convolve last part */
     for(int32_t ii = length - ncoef + 1; ii < length; ii++)
     {
-        output_i[ii] = 0.0;
-        output_q[ii] = 0.0;
-        for(int32_t jj = -ncoef; jj < ncoef - ((int32_t)length - ii); jj++)
+        if((ii % decimation) == 0)
         {
-            output_i[ii] += (input_i[ii + jj] * c[jj + ncoef]);
-            output_q[ii] += (input_q[ii + jj] * c[jj + ncoef]);
+            output_i[ooffset] = 0.0;
+            output_q[ooffset] = 0.0;
+            for(int32_t jj = -ncoef; jj < ncoef - ((int32_t)length - ii); jj++)
+            {
+                output_i[ooffset] += (input_i[ii + jj] * c[jj + ncoef]);
+                output_q[ooffset] += (input_q[ii + jj] * c[jj + ncoef]);
+            }
+            ooffset++;
         }
     }
 
@@ -149,12 +167,12 @@ template class FirFilter<double>;
 
 extern "C"
 {
-    int filterDbl(uint8_t ftype, uint32_t order, double fs, double f, double *ii, double *iq, double *oi, double *oq, size_t len)
+    int filterDbl(uint8_t ftype, uint32_t order, double fs, double f, double *ii, double *iq, double *oi, double *oq, uint32_t decim, size_t len)
     {
         if(FILTER_C_TYPE_LP == ftype)
         {
             LpFirFilter<double> lp(fs, f, order);
-            if(lp.execute(ii, iq, oi, oq, len))
+            if(lp.executeDecim(ii, iq, oi, oq, decim, len))
             {
                 return DSP::Error::FAIL;
             }
