@@ -5,7 +5,7 @@ set(Matlab_ROOT_DIR "/home/player999/storage/program_files/Matlab")
 find_package(Matlab)
 matlab_add_mex(NAME filter_ml SRC filter_ml.c LINK_TO cutedsp)
 
-add_library(cutedsp SHARED filter.cpp)
+add_library(cutedsp SHARED filter.cpp mixer.cpp)
 add_executable(filter_test cutedsp_test.cpp)
 
 target_include_directories(cutedsp PRIVATE .)
