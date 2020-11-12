@@ -8,23 +8,8 @@ template <typename T> Error ataniq(T *in_i, T *in_q, T *omega, size_t len)
 {
     for(size_t ii = 0; ii < len; ii++)
     {
-        T ovalue = std::atan(std::abs(in_q[ii]) / std::abs(in_i[ii]));
-        if((in_i[ii] > 0.0) && (in_q[ii] > 0.0))
-        {
-            omega[ii] = ovalue;
-        }
-        else if((in_i[ii] > 0.0) && (in_q[ii] < 0.0))
-        {
-            omega[ii] = -ovalue;
-        }
-        else if((in_i[ii] < 0.0) && (in_q[ii] < 0.0))
-        {
-            omega[ii] = ovalue - M_PI;
-        }
-        else if((in_i[ii] < 0.0) && (in_q[ii] > 0.0))
-        {
-            omega[ii] = M_PI - ovalue;
-        }
+        T ovalue = std::atan2(in_q[ii], in_i[ii]);
+        omega[ii] = ovalue;
     }
     return SUCCESS;
 }

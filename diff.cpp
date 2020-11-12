@@ -14,11 +14,11 @@ template <class T> Error diffangle(T *omega, T *domega, size_t len)
         domega[ii] = omega[ii+1] - omega[ii];
         if(domega[ii] > M_PI)
         {
-            omega[ii] -= dPI;
+            domega[ii] -= dPI;
         }
         else if(domega[ii] < -M_PI)
         {
-            omega[ii] += dPI;
+            domega[ii] += dPI;
         }
     }
     domega[ii] = omega[ii - 1];
