@@ -17,4 +17,5 @@ I = mat(1:2:end);
 omega = atan_ml(If,Qf);
 y = diff_ml(omega);
 [z1,~] = filter_ml('lowpass', 256, Fs/decimator, AFs/2, (Fs/decimator)/AFs, y, y);
-sound(z1, AFs);
+z1 = z1 .* 6000;
+audio_encoder_ml('shit.mp3', z1);

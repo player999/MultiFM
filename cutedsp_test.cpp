@@ -2,6 +2,7 @@
 #include <iostream>
 #include <gtest/gtest.h>
 #include "filter.hpp"
+#include "audio_encoder.hpp"
 
 TEST(FilterTest, Convolution3) {
     DSP::Error err;
@@ -104,6 +105,28 @@ TEST(FilterTest, Decimation) {
     {
         std::cout << std::scientific << out_i[ii] << " + i*" << out_q[ii] << std::endl;
     }
+}
+
+TEST(FilterTest, AudioCoding)
+{
+#define ELEMS (44100*5)
+    DSP::AudioEncoder ae("test.mp3");
+    double sine[ELEMS];
+    double t, tincr;
+
+    t = 0;
+    tincr = 2 * M_PI * 440.0 / 44100;
+    for(size_t ii = 0; ii < ELEMS; ii++)
+    {
+        sine[ii] = (int16_t)(sin(t) * 10000);
+        t += tincr;
+        if(t > (2 * M_PI))
+        {
+            t -= 2 * M_PI;
+        }
+    }
+    DSP::Error err = ae.encode(sine, ELEMS);
+    ASSERT_EQ(err, DSP::Error::SUCCESS) << "Bad return code";
 }
 
 int main(int argc, char **argv) {
