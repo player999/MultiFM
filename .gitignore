@@ -10,3 +10,5 @@ cmake_install.cmake
 
 *.mexa64
 filter_test
+multifm_console_app
+

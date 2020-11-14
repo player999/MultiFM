@@ -30,8 +30,8 @@ class FmReceiver
             decimator2 = (fs/decimator1)/44100;
 
             encoder = new AudioEncoder(mp3_suffix + to_string((size_t)f) + ".mp3");
-            lowpass = new LpFirFilter<double>(fs, 100e3, 256);
-            lowpass_audio = new LpFirFilter<double>((fs/decimator1), 44100/2, 256);
+            lowpass = new LpFirFilter<double>(fs, 100e3, 96);
+            lowpass_audio = new LpFirFilter<double>((fs/decimator1), 44100/2, 96);
 
             mixed_i.reserve(1000000);
             mixed_q.reserve(1000000);
