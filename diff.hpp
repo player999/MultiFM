@@ -6,7 +6,7 @@
 namespace DSP
 {
     Error diffangle(double *omega, double *domega, size_t len);
-    Error diffanfle(float *omega, float *domega, size_t len);
+    Error diffangle(float *omega, float *domega, size_t len);
 }
 
 #endif /*_DIFF_HPP_*/
