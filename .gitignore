@@ -1,0 +1,12 @@
+*.mp3
+*.out
+*.bin
+*.so
+
+CMakeFiles
+Makefile
+CMakeCache.txt
+cmake_install.cmake
+
+*.mexa64
+filter_test
