@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.18)
 project(FmDemod VERSION 1.0.0 DESCRIPTION "FM Radio demodulation")
 
-add_library(cutedsp SHARED filter.cpp mixer.cpp atan.cpp diff.cpp audio_encoder.cpp)
+add_library(cutedsp SHARED filter.cpp mixer.cpp atan.cpp diff.cpp audio_encoder.cpp interleaving.cpp)
 target_link_libraries(cutedsp PUBLIC avcodec)
 target_include_directories(cutedsp PRIVATE .)
 
