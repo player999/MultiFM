@@ -8,3 +8,7 @@ target_include_directories(cutedsp PRIVATE .)
 add_executable(filter_test cutedsp_test.cpp)
 target_include_directories(filter_test PRIVATE .)
 target_link_libraries(filter_test PUBLIC cutedsp gtest)
+
+add_executable(multifm_console_app multifm_console_app.cpp)
+target_include_directories(multifm_console_app PRIVATE .)
+target_link_libraries(multifm_console_app PUBLIC cutedsp boost_program_options pthread)
