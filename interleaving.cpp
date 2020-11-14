@@ -21,14 +21,14 @@ template <typename T, typename F> Error deinterleave(T *buffer, size_t total_ele
     return SUCCESS;
 }
 
-Error deinterleave(uint8_t *buffer, size_t total_elems, double *output_i, double *output_q)
+Error deinterleave(int8_t *buffer, size_t total_elems, double *output_i, double *output_q)
 {
-    return deinterleave<uint8_t, double>(buffer, total_elems, output_i, output_q);
+    return deinterleave<int8_t, double>(buffer, total_elems, output_i, output_q);
 }
 
-Error deinterleave(uint8_t *buffer, size_t total_elems, float *output_i, float *output_q)
+Error deinterleave(int8_t *buffer, size_t total_elems, float *output_i, float *output_q)
 {
-    return deinterleave<uint8_t, float>(buffer, total_elems, output_i, output_q);
+    return deinterleave<int8_t, float>(buffer, total_elems, output_i, output_q);
 }
 
 Error deinterleave(double *buffer, size_t total_elems, double *output_i, double *output_q)
@@ -61,14 +61,14 @@ template <typename T, typename F> Error deinterleave(std::vector<T> &buffer, F *
     return SUCCESS;
 }
 
-Error deinterleave(std::vector<uint8_t> &buffer, double *output_i, double *output_q)
+Error deinterleave(std::vector<int8_t> &buffer, double *output_i, double *output_q)
 {
-    return deinterleave<uint8_t, double>(buffer, output_i, output_q);
+    return deinterleave<int8_t, double>(buffer, output_i, output_q);
 }
 
-Error deinterleave(std::vector<uint8_t> &buffer, float *output_i, float *output_q)
+Error deinterleave(std::vector<int8_t> &buffer, float *output_i, float *output_q)
 {
-    return deinterleave<uint8_t, float>(buffer, output_i, output_q);
+    return deinterleave<int8_t, float>(buffer, output_i, output_q);
 }
 
 Error deinterleave(std::vector<double> &buffer, double *output_i, double *output_q)
@@ -103,14 +103,14 @@ template <typename T, typename F> Error deinterleave(std::vector<T> &buffer, std
     return SUCCESS;
 }
 
-Error deinterleave(std::vector<uint8_t> &buffer, std::vector<double> &obuffer_i, std::vector<double> &obuffer_q)
+Error deinterleave(std::vector<int8_t> &buffer, std::vector<double> &obuffer_i, std::vector<double> &obuffer_q)
 {
-    return deinterleave<uint8_t, double>(buffer, obuffer_i, obuffer_q);
+    return deinterleave<int8_t, double>(buffer, obuffer_i, obuffer_q);
 }
 
-Error deinterleave(std::vector<uint8_t> &buffer, std::vector<float> &obuffer_i, std::vector<float> &obuffer_q)
+Error deinterleave(std::vector<int8_t> &buffer, std::vector<float> &obuffer_i, std::vector<float> &obuffer_q)
 {
-    return deinterleave<uint8_t, float>(buffer, obuffer_i, obuffer_q);
+    return deinterleave<int8_t, float>(buffer, obuffer_i, obuffer_q);
 }
 
 Error deinterleave(std::vector<double> &buffer, std::vector<double> &obuffer_i, std::vector<double> &obuffer_q)
