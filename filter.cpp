@@ -45,21 +45,96 @@ template <class T> Error FirFilter<T>::getWindow(WindowFunction window_type, uin
     return Error::SUCCESS;
 }
 
-template<class T> Error FirFilter<T>::executeDecim(T *input_i, T *input_q, T *output_i, T *output_q, uint32_t decimation, size_t length)
+template<class T> Error FirFilter<T>::executeRealDecim(T *input, T *output, uint32_t decimation, size_t length)
 {
     if(filter_type == FilterType::FILTER_TYPE_LP)
     {
-        return executeRealFilter(input_i, input_q, output_i, output_q, decimation, length);
+        return executeRealFilter(input, output, decimation, length);
     }
     return Error::SUCCESS;
 }
 
-template<class T> Error FirFilter<T>::execute(T *input_i, T *input_q, T *output_i, T *output_q, size_t length)
+template<class T> Error FirFilter<T>::executeReal(T *input, T *output, size_t length)
 {
-    return executeDecim(input_i, input_q, output_i, output_q, 1, length);
+    return executeRealDecim(input, output, 1, length);
 }
 
-template <class T> Error FirFilter<T>::executeRealFilter(T *input_i, T *input_q, T *output_i, T *output_q, uint32_t decimation, size_t length)
+template <class T> Error FirFilter<T>::executeRealFilter(T *input, T *output, uint32_t decimation, size_t length)
+{
+    int32_t ncoef;
+    size_t ooffset = 0;
+    if((coefficients.size() % 2) == 0)
+    {
+        ncoef = coefficients.size() / 2;
+    }
+    else
+    {
+        ncoef = ((coefficients.size() / 2) + 1);
+    }
+
+    std::vector<T> c(coefficients);
+    std::reverse(c.begin(), c.end());
+
+    /* Convolve first part */
+    for(int32_t ii = 0; ii < (coefficients.size() - ncoef); ii++)
+    {
+        if((ii % decimation) == 0)
+        {
+            output[ooffset] = 0.0;
+            for(int32_t jj = -ii; jj < ncoef; jj++)
+            {
+                output[ooffset] += (input[ii + jj] * c[jj + ncoef]);
+            }
+            ooffset++;
+        }
+    }
+
+    /* Middle */
+    for(int32_t ii = (coefficients.size() - ncoef); ii < length - ncoef + 1; ii++)
+    {
+        if((ii % decimation) == 0)
+        {
+            output[ooffset] = 0.0;
+            for(int32_t jj = -ncoef; jj < ncoef; jj++)
+            {
+                output[ooffset] += (input[ii + jj] * c[jj + ncoef]);
+            }
+            ooffset++;
+        }
+    }
+
+    /* Convolve last part */
+    for(int32_t ii = length - ncoef + 1; ii < length; ii++)
+    {
+        if((ii % decimation) == 0)
+        {
+            output[ooffset] = 0.0;
+            for(int32_t jj = -ncoef; jj < ncoef - ((int32_t)length - ii); jj++)
+            {
+                output[ooffset] += (input[ii + jj] * c[jj + ncoef]);
+            }
+            ooffset++;
+        }
+    }
+
+    return Error::SUCCESS;
+}
+
+template<class T> Error FirFilter<T>::executeCpxDecim(T *input_i, T *input_q, T *output_i, T *output_q, uint32_t decimation, size_t length)
+{
+    if(filter_type == FilterType::FILTER_TYPE_LP)
+    {
+        return executeCpxFilter(input_i, input_q, output_i, output_q, decimation, length);
+    }
+    return Error::SUCCESS;
+}
+
+template<class T> Error FirFilter<T>::executeCpx(T *input_i, T *input_q, T *output_i, T *output_q, size_t length)
+{
+    return executeCpxDecim(input_i, input_q, output_i, output_q, 1, length);
+}
+
+template <class T> Error FirFilter<T>::executeCpxFilter(T *input_i, T *input_q, T *output_i, T *output_q, uint32_t decimation, size_t length)
 {
     int32_t ncoef;
     size_t ooffset = 0;
@@ -172,7 +247,7 @@ extern "C"
         if(FILTER_C_TYPE_LP == ftype)
         {
             LpFirFilter<double> lp(fs, f, order);
-            if(lp.executeDecim(ii, iq, oi, oq, decim, len))
+            if(lp.executeCpxDecim(ii, iq, oi, oq, decim, len))
             {
                 return DSP::Error::FAIL;
             }

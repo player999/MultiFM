@@ -30,15 +30,19 @@ namespace DSP
         public:
             FirFilter(FilterType ft, T fs, T f1, T f2, uint32_t order);
             static Error getWindow(WindowFunction window_type, uint32_t order, T *coefficients);
-            Error execute(T *input_i, T *input_q, T *output_i, T *output_q, size_t length);
-            Error executeDecim(T *input_i, T *input_q, T *output_i, T *output_q, uint32_t decim, size_t length);
-            Error executeRealFilter(T *input_i, T *input_q, T *output_i, T *output_q, uint32_t decimation, size_t length);
-            uint32_t order;
+            Error executeCpx(T *input_i, T *input_q, T *output_i, T *output_q, size_t length);
+            Error executeCpxDecim(T *input_i, T *input_q, T *output_i, T *output_q, uint32_t decim, size_t length);
+            Error executeReal(T *input, T *output, size_t length);
+            Error executeRealDecim(T *input, T *output, uint32_t decim, size_t length);
             T sampling_rate;
             T f1, f2;
-            FilterType filter_type;
             std::vector<T> window;
             std::vector<T> coefficients;
+        private:
+            Error executeCpxFilter(T *input_i, T *input_q, T *output_i, T *output_q, uint32_t decimation, size_t length);
+            Error executeRealFilter(T *input, T *output, uint32_t decimation, size_t length);
+            uint32_t order;
+            FilterType filter_type;
     };
 
     template <class T> class LpFirFilter: public FirFilter<T>
