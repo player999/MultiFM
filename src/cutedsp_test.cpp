@@ -3,6 +3,7 @@
 #include <gtest/gtest.h>
 #include "filter.hpp"
 #include "audio_encoder.hpp"
+#include "fft.hpp"
 
 TEST(FilterTest, Convolution3) {
     DSP::Error err;
@@ -30,12 +31,6 @@ TEST(FilterTest, Convolution3) {
 
     err = lp.executeCpx(in_i, in_q, out_i, out_q, 10);
     ASSERT_EQ(err, DSP::Error::SUCCESS);
-
-    std::cout.precision(std::numeric_limits<float>::max_digits10 - 1);
-    for(uint32_t ii = 0; ii < 10; ii++)
-    {
-        std::cout << std::scientific << out_i[ii] << " + i*" << out_q[ii] << std::endl;
-    }
 }
 
 TEST(FilterTest, Convolution4) {
@@ -65,12 +60,6 @@ TEST(FilterTest, Convolution4) {
 
     err = lp.executeCpx(in_i, in_q, out_i, out_q, 10);
     ASSERT_EQ(err, DSP::Error::SUCCESS);
-
-    std::cout.precision(std::numeric_limits<float>::max_digits10 - 1);
-    for(uint32_t ii = 0; ii < 10; ii++)
-    {
-        std::cout << std::scientific << out_i[ii] << " + i*" << out_q[ii] << std::endl;
-    }
 }
 
 TEST(FilterTest, Decimation) {
@@ -99,12 +88,6 @@ TEST(FilterTest, Decimation) {
 
     err = lp.executeCpxDecim(in_i, in_q, out_i, out_q, 2, 10);
     ASSERT_EQ(err, DSP::Error::SUCCESS);
-
-    std::cout.precision(std::numeric_limits<float>::max_digits10 - 1);
-    for(uint32_t ii = 0; ii < 10; ii++)
-    {
-        std::cout << std::scientific << out_i[ii] << " + i*" << out_q[ii] << std::endl;
-    }
 }
 
 TEST(FilterTest, ConvolutionReal3) {
@@ -131,15 +114,9 @@ TEST(FilterTest, ConvolutionReal3) {
 
     err = lp.executeReal(in, out, 10);
     ASSERT_EQ(err, DSP::Error::SUCCESS);
-
-    std::cout.precision(std::numeric_limits<float>::max_digits10 - 1);
-    for(uint32_t ii = 0; ii < 10; ii++)
-    {
-        std::cout << std::scientific << out[ii] << std::endl;
-    }
 }
 
-TEST(FilterTest, AudioCoding)
+TEST(Coding, AudioCoding)
 {
 #define ELEMS (44100*5)
     DSP::AudioEncoder ae("test.mp3");
@@ -159,6 +136,52 @@ TEST(FilterTest, AudioCoding)
     }
     DSP::Error err = ae.encode(sine, ELEMS);
     ASSERT_EQ(err, DSP::Error::SUCCESS) << "Bad return code";
+}
+
+TEST(FFT, point8)
+{
+#define FFT_SIZE (8)
+    DSP::FFT<double> fft;
+    double in_i[FFT_SIZE] = {1, 2, 3, 4, 5, 6, 7, 8};
+    double in_q[FFT_SIZE] = {0, 0, 0, 0, 0, 0, 0, 0};
+    double out_i[FFT_SIZE];
+    double out_q[FFT_SIZE];
+    double exp_i[FFT_SIZE] = {36, -4, -4, -4, -4, -4, -4, -4};
+    double exp_q[FFT_SIZE] = {0, 9.6569, 4.0000, 1.6569, 0, -1.6569, -4.0000, -9.6569};
+    DSP::Error err;
+
+    err = fft.transform2(in_i, in_q, out_i, out_q, FFT_SIZE);
+    ASSERT_EQ(err, DSP::Error::SUCCESS) << "Bad return code";
+
+    for(size_t ii = 0; ii < FFT_SIZE; ii++)
+    {
+        ASSERT_EQ(round(100*out_i[ii]), round(100*exp_i[ii])) << "Bad expected output value, index = " << ii;
+        ASSERT_EQ(round(100*out_q[ii]), round(100*exp_q[ii])) << "Bad expected output value, index = " << ii;
+    }
+}
+
+TEST(FFT, inverse_point8)
+{
+#define FFT_SIZE (8)
+    DSP::FFT<double> fft;
+    double in_i[FFT_SIZE] = {1, 2, 3, 4, 5, 6, 7, 8};
+    double in_q[FFT_SIZE] = {0, 0, 0, 0, 0, 0, 0, 0};
+    double out_i[FFT_SIZE];
+    double out_q[FFT_SIZE];
+    double out2_i[FFT_SIZE];
+    double out2_q[FFT_SIZE];
+    DSP::Error err;
+
+    err = fft.transform2(in_i, in_q, out_i, out_q, FFT_SIZE);
+    ASSERT_EQ(err, DSP::Error::SUCCESS) << "Bad return code";
+    err = fft.inverse_transform2(out_i, out_q, out2_i, out2_q, FFT_SIZE);
+    ASSERT_EQ(err, DSP::Error::SUCCESS) << "Bad return code";
+
+    for(size_t ii = 0; ii < FFT_SIZE; ii++)
+    {
+        ASSERT_EQ(round(100*in_i[ii]), round(100*out2_i[ii])) << "Bad expected output value, index = " << ii;
+        ASSERT_EQ(round(100*in_q[ii]), round(100*out2_q[ii])) << "Bad expected output value, index = " << ii;
+    }
 }
 
 int main(int argc, char **argv) {
