@@ -1,5 +1,5 @@
 clear;
-f = fopen('data100mhz.bin', 'r');
+f = fopen('../data100mhz.bin', 'r');
 Fs = 20000000;
 AFs = 44100;
 station = 5e6;
