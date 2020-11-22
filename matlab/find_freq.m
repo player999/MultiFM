@@ -21,24 +21,8 @@ spectrum_diff = diff(spectrum_sq);
 
 risings = find(spectrum_diff == 1);
 fallings = find(spectrum_diff == -1);
-
-stations = zeros(length(risings), 1);
-offset = 1;
-for ii = 1:length(risings)
-    f1 = risings(ii);
-    for jj=ii:length(fallings)
-       if (fallings(jj) - risings(ii)) > 200
-          f2 = fallings(jj);
-          for kk = ii:length(fallings)
-              if risings(kk) > f2
-                 ii = kk; 
-              end
-          end
-          f_relative = ((f2 + f1) / 2) - (N/2);
-          f_res = f_relative * (Fs / N) + Cf;
-          stations(offset) = f_res;
-          offset = offset + 1;
-          break;
-       end
-    end
-end
+widths = fallings - risings;
+idxs = find(((widths > 500) & (widths < 10000)) == 1);
+risings = risings(idxs);
+fallings = fallings(idxs);
+stations = Cf + (((risings + fallings) / 2) - (N/2)) * (Fs/N);
