@@ -1,3 +1,5 @@
+#ifndef _FFT_HPP_
+#define _FFT_HPP_
 #include <cstdint>
 #include <cstdlib>
 #include <vector>
@@ -26,3 +28,5 @@ namespace DSP
             std::vector<size_t> bitrev;
     };
 }
+
+#endif /*_FFT_HPP_*/

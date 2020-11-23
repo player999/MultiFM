@@ -67,7 +67,7 @@ namespace DSP
         Error err;
         for (size_t temp = length; temp > 1; temp >>= 1) iterations++;
         if((1 << iterations) != length) return Error::FAIL;//Not a power of 2
-        if(length != wi.size()) updateW(8, true);
+        if(length != wi.size()) updateW(length, true);
         if(length != bitrev.size()) updateBitrev(length);
 
         for(size_t ii = 0; ii < length; ii++)
