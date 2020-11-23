@@ -1,6 +1,10 @@
+#ifndef _CUTEDSP_H_
+#define _CUTEDSP_H_
 #include <diff.hpp>
 #include <atan.hpp>
 #include <filter.hpp>
 #include <interleaving.hpp>
 #include <mixer.hpp>
 #include <audio_encoder.hpp>
+#include <find_stations.hpp>
+#endif /*_CUTEDSP_H_*/
