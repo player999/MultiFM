@@ -202,6 +202,29 @@ template <class T> Error process_chunk_single_freq(FmReceiver<T> *receivers, vec
     return receivers->processChunk(i, q);
 }
 
+static Error station_searching(FILE *fh, double fs, double cf, vector<double> &found_freqs)
+{
+    Error err;
+    const uint32_t analyze_length = 1024 * 1024;
+    vector<int8_t> buffer;
+    vector<double> deinter_i;
+    vector<double> deinter_q;
+
+    buffer.resize(analyze_length * 2);
+    deinter_i.resize(analyze_length);
+    deinter_q.resize(analyze_length);
+
+    (void)fread(buffer.data(), 1, analyze_length * 2, fh);
+
+    err = deinterleave(buffer.data(), analyze_length * 2, deinter_i.data(), deinter_q.data());
+    if(err != SUCCESS)
+    {
+        return err;
+    }
+    err = findStations(deinter_i.data(), deinter_q.data(), analyze_length, fs, cf, found_freqs);
+    return err;
+}
+
 template <class T> Error process_data(string fname, string mp3_prefix, double fs, double cf, vector<double> f)
 {
     #define SAMPLE_COUNT (200000)
@@ -215,7 +238,7 @@ template <class T> Error process_data(string fname, string mp3_prefix, double fs
 #endif
     vector<T> deinter_i;
     vector<T> deinter_q;
-    FmReceiver<T> *receivers[f.size()];
+    vector<FmReceiver<T> *> receivers;
 
     deinter_i.resize(SAMPLE_COUNT);
     deinter_q.resize(SAMPLE_COUNT);
@@ -225,6 +248,18 @@ template <class T> Error process_data(string fname, string mp3_prefix, double fs
     {
         return FAIL;
     }
+
+    if(f.size() == 0)
+    {
+        err = station_searching(fh, fs, cf, f);
+        if(err != SUCCESS)
+        {
+            fclose(fh);
+            return err;
+        }
+    }
+
+    receivers.resize(f.size());
 
     for(uint8_t ii; ii < f.size(); ii++)
     {
@@ -357,8 +392,7 @@ int main(int argc, char *argv[])
     }
     else
     {
-        cout << "Did not set frequency list\n";
-        exit(EINVAL);
+        cout << "Did not set frequency list. Will search for stations\n";
     }
 
     mp3_prefix = vm["out"].as<string>();
