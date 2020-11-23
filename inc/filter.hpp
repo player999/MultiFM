@@ -29,6 +29,7 @@ namespace DSP
     {
         public:
             FirFilter(FilterType ft, T fs, T f1, T f2, uint32_t order);
+            FirFilter(std::vector<double> &cfs);
             static Error getWindow(WindowFunction window_type, uint32_t order, T *coefficients);
             Error executeCpx(T *input_i, T *input_q, T *output_i, T *output_q, size_t length);
             Error executeCpxDecim(T *input_i, T *input_q, T *output_i, T *output_q, uint32_t decim, size_t length);

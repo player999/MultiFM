@@ -22,6 +22,11 @@ template <class T> FirFilter<T>::FirFilter(FilterType ft, T fs, T f1, T f2, uint
     coefficients.resize(order);
 }
 
+template <class T> FirFilter<T>::FirFilter(std::vector<double> &cfs)
+{
+    std::copy(cfs.begin(), cfs.end(), std::back_inserter(coefficients));
+}
+
 template <class T> Error FirFilter<T>::getWindow(WindowFunction window_type, uint32_t order, T *coefficients)
 {
     std::function<T(uint32_t)> window_functor;
