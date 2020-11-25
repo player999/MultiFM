@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <list>
 #include <cmath>
 #include <exception>
 #include <future>
@@ -202,32 +203,37 @@ template <class T> Error process_chunk_single_freq(FmReceiver<T> *receivers, vec
     return receivers->processChunk(i, q);
 }
 
-static Error station_searching(FILE *fh, double fs, double cf, vector<double> &found_freqs)
+static Error station_searching(queue<RfChunk> &queue, double fs, double cf, vector<double> &found_freqs)
 {
     Error err;
     const uint32_t analyze_length = 1024 * 1024;
-    vector<int8_t> buffer;
     vector<double> deinter_i;
     vector<double> deinter_q;
 
-    buffer.resize(analyze_length * 2);
-    deinter_i.resize(analyze_length);
-    deinter_q.resize(analyze_length);
+    deinter_i.reserve(analyze_length * 2);
+    deinter_q.reserve(analyze_length * 2);
 
-    (void)fread(buffer.data(), 1, analyze_length * 2, fh);
-
-    err = deinterleave(buffer.data(), analyze_length * 2, deinter_i.data(), deinter_q.data());
-    if(err != SUCCESS)
+    do
     {
-        return err;
-    }
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        while((queue.size() > 0) && (deinter_i.size() < analyze_length))
+        {
+            RfChunk chunk = queue.front();
+            deinter_i.insert(deinter_i.end(), chunk.I.begin(), chunk.I.end());
+            deinter_q.insert(deinter_q.end(), chunk.Q.begin(), chunk.Q.end());
+            queue.pop();
+        }
+    } while(deinter_i.size() < analyze_length);
+
     err = findStations(deinter_i.data(), deinter_q.data(), analyze_length, fs, cf, found_freqs);
     return err;
 }
 
-template <class T> Error process_data(string fname, string mp3_prefix, double fs, double cf, vector<double> f)
+
+Error process_from_file(string fname, string mp3_prefix, double fs, double cf, vector<double> f)
 {
-    #define SAMPLE_COUNT (200000)
+    #define SAMPLE_COUNT (200000L)
+    #define EMPTY_CYCLE_COUNT (200)
     FILE *fh = NULL;
     size_t samples_a_time = SAMPLE_COUNT * 2;
     int8_t buffer[SAMPLE_COUNT * 2];
@@ -236,97 +242,83 @@ template <class T> Error process_data(string fname, string mp3_prefix, double fs
 #if DEBUG_TRACE_CHUNK == 1
     TracerTong tracer;
 #endif
-    vector<T> deinter_i;
-    vector<T> deinter_q;
-    vector<FmReceiver<T> *> receivers;
-
-    deinter_i.resize(SAMPLE_COUNT);
-    deinter_q.resize(SAMPLE_COUNT);
-
-    fh = fopen(fname.c_str(), "rb");
-    if(NULL == fh)
-    {
-        return FAIL;
-    }
+    vector<FmReceiver<double> *> receivers;
+    list<ConfigEntry> configuration;
+    int64_t interval = (1000000000L * SAMPLE_COUNT) / ((int64_t)fs);
+    configuration.push_back(ConfigEntry("source_type", "file"));
+    configuration.push_back(ConfigEntry("file", fname));
+    configuration.push_back(ConfigEntry("interval", interval));
+    configuration.push_back(ConfigEntry("portion_size", (int64_t)SAMPLE_COUNT));
+    RfSource *fsrc = createSource(configuration);
+    queue<RfChunk> data_queue;
+    fsrc->registerQueue(&data_queue);
+    fsrc->start();
 
     if(f.size() == 0)
     {
-        err = station_searching(fh, fs, cf, f);
+        err = station_searching(data_queue, fs, cf, f);
         if(err != SUCCESS)
         {
-            fclose(fh);
+            delete fsrc;
             return err;
         }
     }
 
     receivers.resize(f.size());
-
     for(uint8_t ii; ii < f.size(); ii++)
     {
-        receivers[ii] = new FmReceiver<T>(mp3_prefix, fs, cf, f[ii]);
+        receivers[ii] = new FmReceiver<double>(mp3_prefix, fs, cf, f[ii]);
     }
 
+    size_t empty_cycles = 0;
     while(true)
     {
-#if DEBUG_TRACE_CHUNK == 1
-        if(trace_timer) tracer.tick(__FILE__, __LINE__);
-#endif
-        byte_count = fread(buffer, 1, samples_a_time, fh);
-        if(0 == byte_count) goto L_error;
-
-        /*  Q = mat(2:2:end);
-            I = mat(1:2:end); */
-
-#if DEBUG_TRACE_CHUNK == 1
-        if(trace_timer) tracer.tick(__FILE__, __LINE__);
-#endif
-        err = deinterleave(buffer, byte_count, deinter_i, deinter_q);
-        if(err != SUCCESS)
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        empty_cycles++;
+        while(data_queue.size() > 0)
         {
-            goto L_error;
-        }
+            RfChunk chunk = data_queue.front();
+            std::future<Error> fut[f.size()];
 
-#if DEBUG_TRACE_CHUNK == 1
-        if(trace_timer) tracer.tick(__FILE__, __LINE__);
-#endif
-        std::future<Error> fut[f.size()];
-        for(uint8_t ii = 0; ii < f.size(); ii++)
-        {
-            if(false == is_parallel)
-            {
-                err = receivers[ii]->processChunk(&deinter_i, &deinter_q);
-                if(err != SUCCESS)
-                {
-                    goto L_error;
-                }
-            }
-            else
-            {
-                fut[ii] = async(process_chunk_single_freq<T>, receivers[ii], &deinter_i, &deinter_q);
-            }
-        }
-
-        if(true == is_parallel)
-        {
-            Error accumulated_error;
+            empty_cycles = 0;
             for(uint8_t ii = 0; ii < f.size(); ii++)
             {
-                Error err = fut[ii].get();
-                if(SUCCESS != err)
+                if(false == is_parallel)
                 {
-                    accumulated_error = err;
+                    err = receivers[ii]->processChunk(&chunk.I, &chunk.Q);
+                    if(err != SUCCESS)
+                    {
+                        /* Error */
+                        break;
+                    }
                 }
-#if DEBUG_TRACE_DEMOD == 1
-                // receivers[ii]->tracer.print();
-#endif
+                else
+                {
+                    fut[ii] = async(process_chunk_single_freq<double>, receivers[ii], &chunk.I, &chunk.Q);
+                }
             }
-            err = accumulated_error;
+
+            if(true == is_parallel)
+            {
+                Error accumulated_error;
+                for(uint8_t ii = 0; ii < f.size(); ii++)
+                {
+                    Error err = fut[ii].get();
+                    if(SUCCESS != err)
+                    {
+                        accumulated_error = err;
+                    }
+                }
+                err = accumulated_error;
+            }
+            data_queue.pop();
         }
-#if DEBUG_TRACE_CHUNK == 1
-        if(trace_timer) tracer.tick(__FILE__, __LINE__);
-#endif
+        if(empty_cycles == EMPTY_CYCLE_COUNT) break;
     }
+
 L_error:
+    fsrc->stop();
+    delete fsrc;
     for(uint8_t ii; ii < f.size(); ii++)
     {
         delete receivers[ii];
@@ -409,7 +401,8 @@ int main(int argc, char *argv[])
         }
     }
 
-    process_data<double>(filename, mp3_prefix, fs, cf, f);
+    //process_data<double>(filename, mp3_prefix, fs, cf, f);
+    process_from_file(filename, mp3_prefix, fs, cf, f);
 
     return 0;
 }
