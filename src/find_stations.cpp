@@ -107,12 +107,6 @@ namespace DSP
                 stations.push_back(station_frequency);
             }
         }
-
-        for(size_t ii = 0; ii < stations.size(); ii++)
-        {
-            cout << stations[ii] << endl;
-        }
-
         return SUCCESS;
     }
 }
