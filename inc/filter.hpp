@@ -12,6 +12,7 @@ namespace DSP
         FILTER_TYPE_LP,
         FILTER_TYPE_HP,
         FILTER_TYPE_BP,
+        FILTER_TYPE_CUSTOM,
     };
 
     enum WindowFunction

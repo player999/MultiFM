@@ -24,6 +24,8 @@ template <class T> FirFilter<T>::FirFilter(FilterType ft, T fs, T f1, T f2, uint
 
 template <class T> FirFilter<T>::FirFilter(std::vector<double> &cfs)
 {
+    order = cfs.size();
+    filter_type = FILTER_TYPE_CUSTOM;
     std::copy(cfs.begin(), cfs.end(), std::back_inserter(coefficients));
 }
 
@@ -52,7 +54,7 @@ template <class T> Error FirFilter<T>::getWindow(WindowFunction window_type, uin
 
 template<class T> Error FirFilter<T>::executeRealDecim(T *input, T *output, uint32_t decimation, size_t length)
 {
-    if(filter_type == FilterType::FILTER_TYPE_LP)
+    if((filter_type == FilterType::FILTER_TYPE_LP) || (filter_type == FilterType::FILTER_TYPE_CUSTOM))
     {
         return executeRealFilter(input, output, decimation, length);
     }
