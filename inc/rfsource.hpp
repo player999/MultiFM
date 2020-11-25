@@ -6,6 +6,7 @@
 #include <vector>
 #include <list>
 #include <cstdint>
+#include <thread>
 
 namespace DSP
 {
@@ -17,8 +18,10 @@ namespace DSP
 
     class RfSource
     {
-        RfSource();
-        virtual void registerQueue(std::queue<RfChunk> *queue) = 0;
+        public:
+            virtual void registerQueue(std::queue<RfChunk> *queue) = 0;
+            virtual void start() = 0;
+            virtual void stop() = 0;
     };
 
     class FileSource: public RfSource
@@ -27,12 +30,16 @@ namespace DSP
             FileSource(std::string &fname, size_t portion, uint64_t interval_nsec);
             ~FileSource();
             void registerQueue(std::queue<RfChunk> *q);
-
+            void start();
+            void stop();
+            static void dataHandler(FileSource *fs);
         private:
-            std::queue<RfChunk> *queue;
-            FILE *fh;
+            bool stopsignal;
             size_t portion_size;
             uint64_t interval;
+            std::queue<RfChunk> *iq_queue;
+            FILE *fh;
+            std::thread *read_thread;
 
     };
 
@@ -49,7 +56,9 @@ namespace DSP
         public:
             ConfigEntry();
             ConfigEntry(const std::string &n);
-            ~ConfigEntry();
+            ConfigEntry(const std::string &n, const std::string &v);
+            ConfigEntry(const std::string &n, double v);
+            ConfigEntry(const std::string &n, int64_t i);
             std::string &getName();
             ConfigType getType();
             std::string &getString();

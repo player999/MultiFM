@@ -7,4 +7,5 @@
 #include <mixer.hpp>
 #include <audio_encoder.hpp>
 #include <find_stations.hpp>
+#include <rfsource.hpp>
 #endif /*_CUTEDSP_H_*/
