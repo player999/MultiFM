@@ -20,6 +20,7 @@ bool trace_timer = false;
 
 #define DEBUG_TRACE_DEMOD (1)
 #define DEBUG_TRACE_CHUNK (1)
+#define SAMPLE_COUNT (200000L)
 
 class TracerTong
 {
@@ -49,6 +50,12 @@ class TracerTong
         }
     private:
         vector<std::tuple<clock_t, string, uint32_t>> clocks;
+};
+
+enum class SourceType
+{
+    FILE,
+    HACKRF
 };
 
 template <class T> class FmReceiver
@@ -230,9 +237,8 @@ static Error station_searching(queue<RfChunk> &queue, double fs, double cf, vect
 }
 
 
-Error process_from_file(string fname, string mp3_prefix, double fs, double cf, vector<double> f)
+Error process_data(list<ConfigEntry> &configuration, string mp3_prefix, double fs, double cf, vector<double> f)
 {
-    #define SAMPLE_COUNT (200000L)
     #define EMPTY_CYCLE_COUNT (200)
     FILE *fh = NULL;
     size_t samples_a_time = SAMPLE_COUNT * 2;
@@ -243,12 +249,6 @@ Error process_from_file(string fname, string mp3_prefix, double fs, double cf, v
     TracerTong tracer;
 #endif
     vector<FmReceiver<double> *> receivers;
-    list<ConfigEntry> configuration;
-    int64_t interval = (1000000000L * SAMPLE_COUNT) / ((int64_t)fs);
-    configuration.push_back(ConfigEntry("source_type", "file"));
-    configuration.push_back(ConfigEntry("file", fname));
-    configuration.push_back(ConfigEntry("interval", interval));
-    configuration.push_back(ConfigEntry("portion_size", (int64_t)SAMPLE_COUNT));
     RfSource *fsrc = createSource(configuration);
     queue<RfChunk> data_queue;
     fsrc->registerQueue(&data_queue);
@@ -333,6 +333,8 @@ int main(int argc, char *argv[])
     double cf;
     vector<double> f;
     string mp3_prefix;
+    SourceType srct;
+    list<ConfigEntry> configuration;
 
     po::options_description desc("MultiFM console app options");
     desc.add_options()
@@ -368,6 +370,7 @@ int main(int argc, char *argv[])
 
     if (vm.count("data"))
     {
+        srct = SourceType::FILE;
         filename = vm["data"].as<string>();
     }
     else
@@ -401,8 +404,15 @@ int main(int argc, char *argv[])
         }
     }
 
-    //process_data<double>(filename, mp3_prefix, fs, cf, f);
-    process_from_file(filename, mp3_prefix, fs, cf, f);
+    if(srct == SourceType::FILE)
+    {
+        int64_t interval = (1000000000L * SAMPLE_COUNT) / ((int64_t)fs);
+        configuration.push_back(ConfigEntry("source_type", "file"));
+        configuration.push_back(ConfigEntry("file", filename));
+        configuration.push_back(ConfigEntry("interval", interval));
+        configuration.push_back(ConfigEntry("portion_size", (int64_t)SAMPLE_COUNT));
+    }
+    process_data(configuration, mp3_prefix, fs, cf, f);
 
     return 0;
 }
