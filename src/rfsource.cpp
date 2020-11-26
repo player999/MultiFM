@@ -3,9 +3,14 @@
 #include "error.hpp"
 #include <algorithm>
 #include <exception>
+#include <string>
 #include <cstdio>
 #include <chrono>
 
+extern "C"
+{
+    static int rx_callback(hackrf_transfer* transfer);
+}
 namespace DSP
 {
     bool operator== (const ConfigEntry &c1, const ConfigEntry &c2)
@@ -134,6 +139,119 @@ namespace DSP
         return;
     }
 
+    HackrfSource::HackrfSource(double cf, double fs, uint8_t lna, uint8_t vga)
+    {
+        int result;
+        result = hackrf_init();
+	    if(result != HACKRF_SUCCESS)
+        {
+            std::__throw_runtime_error("Failed to init hackrf");
+        }
+
+        result = hackrf_open(&device);
+	    if(result != HACKRF_SUCCESS)
+        {
+            std::__throw_runtime_error("hackrf_open_by_serial() failed");
+	    }
+
+        commonConstructor(cf, fs, lna, vga);
+    }
+
+    HackrfSource::HackrfSource(double cf, double fs, uint8_t lna, uint8_t vga, std::string &serial)
+    {
+        int result;
+        result = hackrf_init();
+	    if(result != HACKRF_SUCCESS)
+        {
+            std::__throw_runtime_error("Failed to init hackrf");
+        }
+
+        result = hackrf_open_by_serial(serial.c_str(), &device);
+	    if(result != HACKRF_SUCCESS)
+        {
+            std::__throw_runtime_error("hackrf_open_by_serial() failed");
+	    }
+
+        commonConstructor(cf, fs, lna, vga);
+    }
+
+    void HackrfSource::commonConstructor(double cf, double fs, uint8_t lna, uint8_t vga)
+    {
+        int result;
+        result = hackrf_set_sample_rate(device, (uint32_t)fs);
+        if( result != HACKRF_SUCCESS )
+        {
+            std::__throw_runtime_error("hackrf_set_sample_rate()");
+        }
+
+        result = hackrf_set_baseband_filter_bandwidth(device, (uint32_t)(fs/2));
+        if( result != HACKRF_SUCCESS )
+        {
+            std::__throw_runtime_error("hackrf_set_baseband_filter_bandwidth()");
+        }
+
+        result = hackrf_set_freq(device, (uint32_t)cf);
+		if( result != HACKRF_SUCCESS )
+        {
+            std::__throw_runtime_error("hackrf_set_freq()");
+		}
+
+        result = hackrf_set_vga_gain(device, vga);
+        if( result != HACKRF_SUCCESS )
+        {
+            std::__throw_runtime_error("hackrf_set_vga_gain()");
+		}
+
+		result = hackrf_set_lna_gain(device, lna);
+        if( result != HACKRF_SUCCESS )
+        {
+            std::__throw_runtime_error("hackrf_set_lna_gain()");
+		}
+    }
+
+    HackrfSource::~HackrfSource()
+    {
+        hackrf_close(device);
+        hackrf_exit();
+    }
+
+    void HackrfSource::registerQueue(std::queue<RfChunk> *q)
+    {
+        iq_queue = q;
+    }
+
+    void HackrfSource::start()
+    {
+        int result;
+        result = hackrf_start_rx(device, rx_callback, this);
+        if( result != HACKRF_SUCCESS )
+        {
+            std::__throw_runtime_error("Failed to stop receive process");
+        }
+    }
+
+    void HackrfSource::stop()
+    {
+        int result;
+        result = hackrf_stop_rx(device);
+        if( result != HACKRF_SUCCESS )
+        {
+            std::__throw_runtime_error("Failed to stop receive process");
+        }
+    }
+
+    void HackrfSource::dataHandler(int8_t *buffer, size_t valid_length)
+    {
+        RfChunk chunk;
+        Error err;
+        err = deinterleave(buffer, valid_length, chunk.I, chunk.Q);
+        if(err != SUCCESS)
+        {
+            return;
+        }
+        iq_queue->push(chunk);
+    }
+
     RfSource *createSource(std::list<ConfigEntry> &configs)
     {
         auto source_type = std::find(configs.begin(), configs.end(), ConfigEntry("source_type"));
@@ -151,3 +269,12 @@ namespace DSP
     }
 }
 
+extern "C"
+{
+    static int rx_callback(hackrf_transfer* transfer)
+    {
+        DSP::HackrfSource *hckrfsrc = (DSP::HackrfSource *)transfer->rx_ctx;
+        hckrfsrc->dataHandler((int8_t *)transfer->buffer, transfer->valid_length);
+        return 0;
+    }
+}

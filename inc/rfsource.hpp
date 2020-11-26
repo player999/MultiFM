@@ -7,6 +7,7 @@
 #include <list>
 #include <cstdint>
 #include <thread>
+#include <libhackrf/hackrf.h>
 
 namespace DSP
 {
@@ -40,7 +41,22 @@ namespace DSP
             std::queue<RfChunk> *iq_queue;
             FILE *fh;
             std::thread *read_thread;
+    };
 
+    class HackrfSource: public RfSource
+    {
+        public:
+            HackrfSource(double cf, double fs, uint8_t lna, uint8_t vga);
+            HackrfSource(double cf, double fs, uint8_t lna, uint8_t vga, std::string &serial);
+            ~HackrfSource();
+            void registerQueue(std::queue<RfChunk> *q);
+            void start();
+            void stop();
+            void dataHandler(int8_t *buffer, size_t valid_length);
+        private:
+            void commonConstructor(double cf, double fs, uint8_t lna, uint8_t vga);
+            std::queue<RfChunk> *iq_queue;
+            hackrf_device* device = NULL;
     };
 
     enum ConfigType
