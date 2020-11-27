@@ -339,11 +339,14 @@ int main(int argc, char *argv[])
     po::options_description desc("MultiFM console app options");
     desc.add_options()
         ("help,h", "produce help message")
-        ("data,d", po::value<string>(), "8-bit data")
+        ("data_file,d", po::value<string>(), "8-bit data file")
+        ("hackrf", "use HackRF")
         ("out,o", po::value<string>()->default_value("multifm_"), "prefix for mp3 files")
-        ("fs", po::value<double>()->default_value(20e6), "sampling rate")
-        ("cf", po::value<double>()->default_value(100e6), "center frequency")
-        ("frequencies,f", po::value<vector<double>>(), "frequency list")
+        ("fs", po::value<double>()->default_value(20e6), "sampling rate, Hz")
+        ("cf", po::value<double>()->default_value(100e6), "center frequency, Hz")
+        ("lna", po::value<int>()->default_value(10), "LNA gain, db")
+        ("vga", po::value<int>()->default_value(30), "VGA gain, db")
+        ("frequencies,f", po::value<vector<double>>(), "frequency list, Hz")
         ("single,s", "single thread")
         ("trace", "output timer trace")
     ;
@@ -366,17 +369,6 @@ int main(int argc, char *argv[])
     if (vm.count("trace"))
     {
         trace_timer = true;
-    }
-
-    if (vm.count("data"))
-    {
-        srct = SourceType::FILE;
-        filename = vm["data"].as<string>();
-    }
-    else
-    {
-        cout << "Did not get input file filename\n";
-        exit(EINVAL);
     }
 
     fs = vm["fs"].as<double>();
@@ -404,14 +396,33 @@ int main(int argc, char *argv[])
         }
     }
 
-    if(srct == SourceType::FILE)
+    if (vm.count("data_file"))
     {
+        filename = vm["data_file"].as<string>();
         int64_t interval = (1000000000L * SAMPLE_COUNT) / ((int64_t)fs);
         configuration.push_back(ConfigEntry("source_type", "file"));
         configuration.push_back(ConfigEntry("file", filename));
         configuration.push_back(ConfigEntry("interval", interval));
         configuration.push_back(ConfigEntry("portion_size", (int64_t)SAMPLE_COUNT));
     }
+    else if(vm.count("hackrf"))
+    {
+        int lna, vga;
+        lna = vm["lna"].as<int>();
+        vga = vm["vga"].as<int>();
+        configuration.push_back(ConfigEntry("source_type", "hackrf"));
+        configuration.push_back(ConfigEntry("lna_gain", (int64_t)lna));
+        configuration.push_back(ConfigEntry("vga_gain", (int64_t)vga));
+        configuration.push_back(ConfigEntry("sampling_rate", fs));
+        configuration.push_back(ConfigEntry("frequency", cf));
+    }
+    else
+    {
+        cout << "Did not get input file filename\n";
+        exit(EINVAL);
+    }
+
+
     process_data(configuration, mp3_prefix, fs, cf, f);
 
     return 0;

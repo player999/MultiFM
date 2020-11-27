@@ -262,6 +262,14 @@ namespace DSP
             size_t portion_size = std::find(configs.begin(), configs.end(), ConfigEntry("portion_size"))->getInt();
             return new FileSource(filename, portion_size, interval);
         }
+        else if("hackrf" == source_type->getString())
+        {
+            double fs = std::find(configs.begin(), configs.end(), ConfigEntry("sampling_rate"))->getFloat();
+            double f = std::find(configs.begin(), configs.end(), ConfigEntry("frequency"))->getFloat();
+            uint8_t lna = (uint8_t)std::find(configs.begin(), configs.end(), ConfigEntry("lna_gain"))->getInt();
+            uint8_t vga = (uint8_t)std::find(configs.begin(), configs.end(), ConfigEntry("vga_gain"))->getInt();
+            return new HackrfSource(f, fs, lna, vga);
+        }
         else
         {
             std::__throw_runtime_error("Unknown RF source type");
