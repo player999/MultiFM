@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.18)
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=znver2")
 
-add_library(cutedsp SHARED filter.cpp mixer.cpp atan.cpp diff.cpp audio_encoder.cpp interleaving.cpp fft.cpp find_stations.cpp rfsource.cpp)
+add_library(cutedsp SHARED filter.cpp mixer.cpp atan.cpp diff.cpp audio_encoder.cpp interleaving.cpp fft.cpp find_stations.cpp rfsource.cpp fm_receiver.cpp tracer_tong.cpp)
 target_link_libraries(cutedsp PUBLIC avcodec hackrf)
 target_include_directories(cutedsp PRIVATE ../inc)
 

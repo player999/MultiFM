@@ -8,4 +8,6 @@
 #include <audio_encoder.hpp>
 #include <find_stations.hpp>
 #include <rfsource.hpp>
+#include <fm_receiver.hpp>
+#include <tracer_tong.hpp>
 #endif /*_CUTEDSP_H_*/
