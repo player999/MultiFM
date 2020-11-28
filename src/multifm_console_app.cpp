@@ -67,6 +67,7 @@ Error process_data(list<ConfigEntry> &configuration, string mp3_prefix, double f
     vector<FmReceiver<double> *> receivers;
     RfSource *fsrc = createSource(configuration);
     queue<RfChunk> data_queue;
+    size_t empty_cycles = 0;
     fsrc->registerQueue(&data_queue);
     fsrc->start();
 
@@ -78,6 +79,12 @@ Error process_data(list<ConfigEntry> &configuration, string mp3_prefix, double f
             delete fsrc;
             return err;
         }
+
+        if(f.size() == 0)
+        {
+            cout << "No stations found. Terminating" << endl;
+            goto L_error;
+        }
     }
 
     receivers.resize(f.size());
@@ -86,7 +93,6 @@ Error process_data(list<ConfigEntry> &configuration, string mp3_prefix, double f
         receivers[ii] = new FmReceiver<double>(mp3_prefix, fs, cf, f[ii]);
     }
 
-    size_t empty_cycles = 0;
     while(true)
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
@@ -156,8 +162,9 @@ int main(int argc, char *argv[])
         ("help,h", "produce help message")
         ("data_file,d", po::value<string>(), "8-bit data file")
         ("hackrf", "use HackRF")
+        ("rtlsdr", "use RTL SDR")
         ("out,o", po::value<string>()->default_value("multifm_"), "prefix for mp3 files")
-        ("fs", po::value<double>()->default_value(20e6), "sampling rate, Hz")
+        ("fs", po::value<double>(), "sampling rate, Hz")
         ("cf", po::value<double>()->default_value(100e6), "center frequency, Hz")
         ("lna", po::value<int>()->default_value(10), "LNA gain, db")
         ("vga", po::value<int>()->default_value(30), "VGA gain, db")
@@ -186,8 +193,6 @@ int main(int argc, char *argv[])
         trace_timer = true;
     }
 
-    fs = vm["fs"].as<double>();
-
     if (vm.count("frequencies"))
     {
         f = vm["frequencies"].as<vector<double>>();
@@ -214,6 +219,14 @@ int main(int argc, char *argv[])
     if (vm.count("data_file"))
     {
         filename = vm["data_file"].as<string>();
+        if(vm.count("fs"))
+        {
+            fs = vm["fs"].as<double>();
+        }
+        else
+        {
+            fs = 20000000.0;
+        }
         int64_t interval = (1000000000L * SAMPLE_COUNT) / ((int64_t)fs);
         configuration.push_back(ConfigEntry("source_type", "file"));
         configuration.push_back(ConfigEntry("file", filename));
@@ -225,11 +238,33 @@ int main(int argc, char *argv[])
         int lna, vga;
         lna = vm["lna"].as<int>();
         vga = vm["vga"].as<int>();
+        if(vm.count("fs"))
+        {
+            fs = vm["fs"].as<double>();
+        }
+        else
+        {
+            fs = 20000000.0;
+        }
         configuration.push_back(ConfigEntry("source_type", "hackrf"));
         configuration.push_back(ConfigEntry("lna_gain", (int64_t)lna));
         configuration.push_back(ConfigEntry("vga_gain", (int64_t)vga));
         configuration.push_back(ConfigEntry("sampling_rate", fs));
         configuration.push_back(ConfigEntry("frequency", cf));
+    }
+    else if(vm.count("rtlsdr"))
+    {
+        configuration.push_back(ConfigEntry("source_type", "rtlsdr"));
+        configuration.push_back(ConfigEntry("frequency", cf));
+        if(vm.count("fs"))
+        {
+            fs = vm["fs"].as<double>();
+        }
+        else
+        {
+            fs = 1008000.0;
+        }
+        configuration.push_back(ConfigEntry("sampling_rate", fs));
     }
     else
     {

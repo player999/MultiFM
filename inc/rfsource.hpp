@@ -8,6 +8,8 @@
 #include <cstdint>
 #include <thread>
 #include <libhackrf/hackrf.h>
+#include <rtl-sdr.h>
+#include <future>
 
 namespace DSP
 {
@@ -57,6 +59,22 @@ namespace DSP
             void commonConstructor(double cf, double fs, uint8_t lna, uint8_t vga);
             std::queue<RfChunk> *iq_queue;
             hackrf_device* device = NULL;
+    };
+
+    class RtlSdrSource: public RfSource
+    {
+        public:
+            RtlSdrSource(uint32_t cf, uint32_t fs);
+            RtlSdrSource(uint32_t cf, uint32_t sampling_rate, bool automatic_gain, uint8_t gain, const std::string &serial);
+            ~RtlSdrSource();
+            void registerQueue(std::queue<RfChunk> *q);
+            void start();
+            void stop();
+            void dataHandler(int8_t *buffer, size_t valid_length);
+        private:
+            std::queue<RfChunk> *iq_queue;
+            rtlsdr_dev_t *device = NULL;
+            std::future<void> dongle_th;
     };
 
     enum ConfigType
