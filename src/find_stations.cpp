@@ -1,7 +1,10 @@
 #include "find_stations.hpp"
 #include "fft.hpp"
 #include "filter.hpp"
+#include "mixer.hpp"
 #include <iostream>
+#include <algorithm>
+#include <cmath>
 
 // spectrum = abs(fftshift(fft(mat)));
 // spectrum_mean = movmean(spectrum,1001);
@@ -109,4 +112,90 @@ namespace DSP
         }
         return SUCCESS;
     }
+
+    template <class T> FmStationsFinder<T>::FmStationsFinder(int64_t fs, int64_t cf, size_t num_points,
+        int64_t channel_step, int64_t peak_width, uint8_t peak_points, double relative_diff):
+            sampling_rate(fs), central_frequency(cf), points_to_analyze(num_points), channel_step(channel_step),
+            peak_width(peak_width), peak_points(peak_points), peak_diff(relative_diff)
+    {
+        frequencies.reserve(fs / channel_step);
+        frequencies.push_back(0);
+        for(int64_t ff = channel_step; ff < (fs/2); ff += channel_step)
+        {
+            frequencies.push_back(-ff);
+            frequencies.push_back(ff);
+        }
+        std::sort(frequencies.begin(), frequencies.end());
+        sinusoids_i.resize(frequencies.size());
+        sinusoids_q.resize(frequencies.size());
+
+        T points_count = peak_points * 2 + 1;
+        for(size_t ii = 0; ii < frequencies.size(); ii++)
+        {
+            std::vector<T> &idata = sinusoids_i[ii];
+            std::vector<T> &qdata = sinusoids_q[ii];
+            idata.resize(num_points);
+            qdata.resize(num_points);
+
+            for(size_t jj = 0; jj < points_to_analyze; jj++)
+            {
+                T value_i = 0;
+                T value_q = 0;
+                T current_time = (double)jj / (double)fs;
+                for(int8_t nn = -peak_points; nn <= peak_points; nn++)
+                {
+                    T cur_freq = (T)frequencies[ii] + nn * ((T)peak_width / points_count);
+                    value_i += cos(2 * M_PI * cur_freq  * current_time);
+                    value_q += -sin(2 * M_PI * cur_freq  * current_time);
+                }
+                value_i /= points_count;
+                value_q /= points_count;
+                idata[jj] = value_i;
+                qdata[jj] = value_q;
+            }
+        }
+    }
+
+    template <class T> Error FmStationsFinder<T>::findStations(T *in_i, T *in_q, size_t buflen, std::vector<double> &station_frequencies)
+    {
+        if(buflen < points_to_analyze)
+        {
+            return FAIL;
+        }
+
+        std::vector<T> amps(frequencies.size());
+        for(uint32_t ii = 0; ii < frequencies.size(); ii++)
+        {
+            T amp_i = 0;
+            T amp_q = 0;
+            std::vector<T> &idata = sinusoids_i[ii];
+            std::vector<T> &qdata = sinusoids_q[ii];
+            for(size_t jj = 0; jj < points_to_analyze; jj++)
+            {
+                T out_i, out_q;
+                out_i = idata[jj] * in_i[jj] - qdata[jj] * in_q[jj];
+                out_q = idata[jj] * in_q[jj] + qdata[jj] * in_i[jj];
+                amp_i += out_i;
+                amp_q += out_q;
+            }
+            amps[ii] = (amp_i * amp_i) + (amp_q * amp_q);
+        }
+
+        for(uint32_t ii = 0; ii < frequencies.size() - 2; ii++)
+        {
+            T lower = (amps[ii + 0] + amps[ii + 2]) / 2;
+            T upper = amps[ii + 1];
+
+            if((upper / lower) > peak_diff)
+            {
+                station_frequencies.push_back(central_frequency + frequencies[ii + 1]);
+            }
+        }
+
+        return SUCCESS;
+    }
+
+    template class FmStationsFinder<float>;
+    template class FmStationsFinder<double>;
 }
+

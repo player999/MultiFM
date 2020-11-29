@@ -48,7 +48,8 @@ static Error station_searching(queue<RfChunk> &queue, double fs, double cf, vect
         }
     } while(deinter_i.size() < analyze_length);
 
-    err = findStations(deinter_i.data(), deinter_q.data(), analyze_length, fs, cf, found_freqs);
+    FmStationsFinder<double> finder((int64_t)fs, (int64_t) cf, analyze_length, 100e3, 1e3, 3, 5.0);
+    err = finder.findStations(deinter_i.data(), deinter_q.data(), analyze_length, found_freqs);
     return err;
 }
 
