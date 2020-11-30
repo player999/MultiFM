@@ -356,7 +356,7 @@ namespace DSP
             std::__throw_runtime_error("Failed to run rtlsdr_set_sample_rate()");
         }
 
-        retval = rtlsdr_set_tuner_bandwidth(device, (uint32_t)(sampling_rate / 2));
+        retval = rtlsdr_set_tuner_bandwidth(device, (uint32_t)(sampling_rate));
         if (retval)
         {
             std::__throw_runtime_error("Failed to run rtlsdr_set_tuner_bandwidth()");
