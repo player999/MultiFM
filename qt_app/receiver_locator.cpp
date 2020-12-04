@@ -29,6 +29,10 @@ QString Receiver::toString()
     {
         text = "HackRF ";
     }
+    else if(_type == ReceiverType::NONE)
+    {
+        text = "";
+    }
     else
     {
         text = "Unknown";
@@ -76,6 +80,7 @@ static void find_hackrfs(QList<Receiver> &rcvrs)
 
 void find_receivers(QList<Receiver> &rcvrs)
 {
+    rcvrs.append(Receiver(ReceiverType::NONE, "Select receiver"));
     find_rtlsdrs(rcvrs);
     find_hackrfs(rcvrs);
 }

@@ -5,6 +5,7 @@
 #include <QList>
 enum class ReceiverType
 {
+    NONE,
     HACKRF,
     RTLSDR
 };
