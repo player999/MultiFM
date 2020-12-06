@@ -9,13 +9,18 @@ enum class ReceiverType
     HACKRF,
     RTLSDR
 };
-class Receiver: public QVariant
+class Receiver
 {
     public:
         Receiver(ReceiverType type, QString serial);
-        ReceiverType getType();
-        QString &getSerial();
-        QString toString();
+        Receiver(QByteArray idata);
+        Receiver(Receiver &r);
+        Receiver();
+        ReceiverType getType() const;
+        QString getSerial() const;
+        QString toString() const;
+        operator QByteArray() const;
+        Receiver& operator=(const Receiver &r);
     private:
         ReceiverType _type;
         QString _serial;

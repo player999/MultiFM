@@ -1,6 +1,8 @@
 #include "receiver_locator.h"
 #include <rtl-sdr.h>
 #include <libhackrf/hackrf.h>
+#include <type_traits>
+#include <QDataStream>
 
 Receiver::Receiver(ReceiverType type, QString serial):
     _type(type), _serial(serial)
@@ -8,17 +10,45 @@ Receiver::Receiver(ReceiverType type, QString serial):
 
 }
 
-ReceiverType Receiver::getType()
+Receiver::Receiver(QByteArray input_bytes)
+{
+    QDataStream ist(input_bytes);
+    std::underlying_type<ReceiverType>::type t;
+    ist >> t;
+    _type = static_cast<ReceiverType>(t);
+    ist >> _serial;
+}
+
+Receiver::Receiver(Receiver &r)
+{
+    _type = r.getType();
+    _serial = r.getSerial();
+}
+
+Receiver::Receiver()
+{
+    _type = ReceiverType::NONE;
+    _serial = "";
+}
+
+Receiver& Receiver::operator=(const Receiver &r)
+{
+    _type = r._type;
+    _serial = r._serial;
+    return *this;
+}
+
+ReceiverType Receiver::getType() const
 {
     return _type;
 }
 
-QString &Receiver::getSerial()
+QString Receiver::getSerial() const
 {
     return _serial;
 }
 
-QString Receiver::toString()
+QString Receiver::toString() const
 {
     QString text;
     if(_type == ReceiverType::RTLSDR)
@@ -40,6 +70,16 @@ QString Receiver::toString()
 
     text += _serial;
     return text;
+}
+
+Receiver::operator QByteArray() const
+{
+    QByteArray ba;
+    QDataStream ost(&ba, QIODevice::WriteOnly);
+    std::underlying_type<ReceiverType>::type t = static_cast<std::underlying_type<ReceiverType>::type>(_type);
+    ost<<t;
+    ost<<_serial;
+    return ba;
 }
 
 static void find_rtlsdrs(QList<Receiver> &rcvrs)

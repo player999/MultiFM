@@ -16,11 +16,13 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    device_options.cpp \
     main.cpp \
     mainwindow.cpp \
     receiver_locator.cpp
 
 HEADERS += \
+    device_options.h \
     mainwindow.h \
     receiver_locator.h
 

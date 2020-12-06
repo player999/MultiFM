@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include "receiver_locator.h"
+#include "device_options.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -16,8 +17,14 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+public slots:
+    void selectedNewDevice(int idx);
+
 private:
-    QList<Receiver> rceivrs;
+    Receiver _rcvr;
+    DeviceOptions *_devopts = NULL;
     Ui::MainWindow *ui;
+    void updateDeviceCombo();
+    void disableDevRelatedInterface();
 };
 #endif // MAINWINDOW_H
