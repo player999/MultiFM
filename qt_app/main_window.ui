@@ -87,6 +87,12 @@
           <property name="text">
            <string>Set frequency</string>
           </property>
+          <property name="checkable">
+           <bool>true</bool>
+          </property>
+          <property name="flat">
+           <bool>false</bool>
+          </property>
          </widget>
         </item>
        </layout>
@@ -103,6 +109,9 @@
           </property>
           <property name="text">
            <string>Set bandwidth</string>
+          </property>
+          <property name="checkable">
+           <bool>true</bool>
           </property>
          </widget>
         </item>
@@ -145,6 +154,9 @@
           <property name="text">
            <string>Set LNA gain</string>
           </property>
+          <property name="checkable">
+           <bool>true</bool>
+          </property>
          </widget>
         </item>
        </layout>
@@ -171,6 +183,9 @@
           </property>
           <property name="text">
            <string>Set VGA gain</string>
+          </property>
+          <property name="checkable">
+           <bool>true</bool>
           </property>
          </widget>
         </item>
