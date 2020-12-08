@@ -50,6 +50,7 @@ namespace DSP
             virtual void registerQueue(std::queue<RfChunk> *queue) = 0;
             virtual void start() = 0;
             virtual void stop() = 0;
+            virtual ~RfSource() = 0;
     };
 
     class FileSource: public RfSource

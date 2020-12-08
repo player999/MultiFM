@@ -9,7 +9,7 @@ class DeviceOptions
 {
 public:
     DeviceOptions();
-    virtual ~DeviceOptions(){};
+    virtual ~DeviceOptions() = 0;
     virtual int64_t minFrequency() = 0;
     virtual int64_t maxFrequency() = 0;
     virtual std::vector<double> gains(uint8_t idx) = 0;

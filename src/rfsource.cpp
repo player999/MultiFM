@@ -79,6 +79,7 @@ namespace DSP
         return i;
     }
 
+    RfSource::~RfSource() { }
     FileSource::FileSource(std::string &fname, size_t portion, uint64_t interval_nsec)
     {
         portion_size = portion;

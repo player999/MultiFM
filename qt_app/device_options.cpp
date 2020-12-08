@@ -5,6 +5,7 @@
 using namespace std;
 
 DeviceOptions::DeviceOptions() { }
+DeviceOptions::~DeviceOptions() { }
 
 HackrfDeviceOptions::HackrfDeviceOptions(std::string serial __attribute__((unused)))
 {
@@ -25,7 +26,7 @@ HackrfDeviceOptions::HackrfDeviceOptions(std::string serial __attribute__((unuse
     _max_freq = 7250000000;
 }
 
-HackrfDeviceOptions::~HackrfDeviceOptions() {}
+HackrfDeviceOptions::~HackrfDeviceOptions() { }
 
 std::vector<double> HackrfDeviceOptions::gains(uint8_t idx)
 {
