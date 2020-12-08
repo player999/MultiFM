@@ -29,7 +29,9 @@ HEADERS += \
 FORMS += \
     main_window.ui
 
-LIBS += -lrtlsdr -lhackrf
+LIBS += -lrtlsdr -lhackrf ../../src/libcutedsp.so
+
+INCLUDEPATH += ../inc
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

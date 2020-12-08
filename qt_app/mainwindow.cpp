@@ -3,6 +3,10 @@
 #include "ui_main_window.h"
 #include <QDebug>
 #include <QDoubleValidator>
+#include <cutedsp.hpp>
+
+using namespace DSP;
+using namespace std;
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -10,6 +14,8 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     updateDeviceCombo();
+    _station_list_model = new QStringListModel(this);
+    ui->stationList->setModel(_station_list_model);
     connect(ui->deviceCombo, SIGNAL(currentIndexChanged(int)), this, SLOT(selectedNewDevice(int)));
 }
 
@@ -153,4 +159,87 @@ void MainWindow::on_vgaGainButton_toggled(bool checked)
     {
         _vga_gain = ui->vgaGainCombo->currentData().toDouble();
     }
+}
+
+std::list<ConfigEntry> MainWindow::getReceiverConfiguration()
+{
+    std::list<ConfigEntry> conf;
+
+    if(_rcvr.getType() == ReceiverType::HACKRF)
+    {
+        if(_vga_valid && _lna_valid && _fs_valid && _freq_valid)
+        {
+            conf.push_back(ConfigEntry("source_type", "hackrf"));
+            conf.push_back(ConfigEntry("lna_gain", (int64_t)_lna_gain));
+            conf.push_back(ConfigEntry("vga_gain", (int64_t)_vga_gain));
+            conf.push_back(ConfigEntry("sampling_rate", (double)_fs));
+            conf.push_back(ConfigEntry("frequency", (double)_freq));
+        }
+    }
+    else if(_rcvr.getType() == ReceiverType::RTLSDR)
+    {
+        if(_vga_valid && _lna_valid && _fs_valid && _freq_valid)
+        {
+            conf.push_back(ConfigEntry("frequency", (double)_freq));
+            conf.push_back(ConfigEntry("gain", _lna_gain));
+            conf.push_back(ConfigEntry("sampling_rate", (double)_fs));
+        }
+    }
+
+    return conf;
+}
+
+static Error station_searching(queue<RfChunk> &q, double fs, double cf, vector<double> &found_freqs)
+{
+    Error err;
+    const uint32_t analyze_length = 1024 * 1024;
+    vector<double> deinter_i;
+    vector<double> deinter_q;
+
+    deinter_i.reserve(analyze_length * 2);
+    deinter_q.reserve(analyze_length * 2);
+
+    do
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        while((q.size() > 0) && (deinter_i.size() < analyze_length))
+        {
+            RfChunk chunk = q.front();
+            deinter_i.insert(deinter_i.end(), chunk.I.begin(), chunk.I.end());
+            deinter_q.insert(deinter_q.end(), chunk.Q.begin(), chunk.Q.end());
+            q.pop();
+        }
+    } while(deinter_i.size() < analyze_length);
+
+    FmStationsFinder<double> finder((int64_t)fs, (int64_t) cf, analyze_length, 100e3, 1e3, 3, 5.0);
+    err = finder.findStations(deinter_i.data(), deinter_q.data(), analyze_length, found_freqs);
+    return err;
+}
+
+void MainWindow::on_stopButton_clicked()
+{
+    std::list<ConfigEntry> configs = getReceiverConfiguration();
+    if(configs.empty())
+    {
+        return;
+    }
+    ui->stopButton->setEnabled(false);
+    RfSource *src = createSource(configs);
+    queue<RfChunk> data_queue;
+    vector<double> found_freqs;
+    src->registerQueue(&data_queue);
+    src->start();
+    Error err = station_searching(data_queue, (double) _fs, (double)_freq, found_freqs);
+    src->stop();
+    if(Error::SUCCESS == err)
+    {
+        _station_list.clear();
+        for(double f: found_freqs)
+        {
+            _station_list << QString::number(f, 'f', 0);
+        }
+        _station_list_model->setStringList(_station_list);
+    }
+    delete src;
+    ui->stopButton->setEnabled(true);
 }

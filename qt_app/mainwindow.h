@@ -3,8 +3,10 @@
 
 #include <QMainWindow>
 #include <QDoubleValidator>
+#include <QStringListModel>
 #include "receiver_locator.h"
 #include "device_options.h"
+#include "rfsource.hpp"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -23,19 +25,21 @@ public slots:
 
 private slots:
     void on_frequencyButton_toggled(bool checked);
-
     void on_bwButton_toggled(bool checked);
-
     void on_lnaGainButton_toggled(bool checked);
-
     void on_vgaGainButton_toggled(bool checked);
 
+    void on_stopButton_clicked();
+
 private:
+    std::list<DSP::ConfigEntry> getReceiverConfiguration();
     Receiver _rcvr;
     DeviceOptions *_devopts = NULL;
     Ui::MainWindow *ui;
     QDoubleValidator _val_fs;
     QDoubleValidator _val_freq;
+    QStringListModel *_station_list_model;
+    QStringList _station_list;
 
     bool _freq_valid;
     int64_t _freq;
