@@ -210,9 +210,11 @@ static Error station_searching(queue<RfChunk> &q, double fs, double cf, vector<d
             q.pop();
         }
     } while(deinter_i.size() < analyze_length);
-
-    FmStationsFinder<double> finder((int64_t)fs, (int64_t) cf, analyze_length, 100e3, 1e3, 3, 5.0);
+    qDebug() << "Collected all necessary samples for analysis";
+    FmStationsFinder<double> finder((int64_t)fs, (int64_t) cf, analyze_length, 100e3, 1e3, 2, 5.0);
+    qDebug() << "Station finder created";
     err = finder.findStations(deinter_i.data(), deinter_q.data(), analyze_length, found_freqs);
+    qDebug() << "Station search ended";
     return err;
 }
 
@@ -232,6 +234,7 @@ void MainWindow::on_scanButton_clicked()
     ui->stopButton->setEnabled(false);
     ui->startButton->setEnabled(false);
     ui->scanButton->setEnabled(false);
+    if(t.joinable()) t.join();
     t = std::thread([configs,this](){
         RfSource *src = createSource(configs);
         queue<RfChunk> data_queue;

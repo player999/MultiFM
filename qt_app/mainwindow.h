@@ -31,6 +31,10 @@ private slots:
 
     void on_stopButton_clicked();
 
+    void on_scanButton_clicked();
+
+    void on_startButton_clicked();
+
 private:
     std::list<DSP::ConfigEntry> getReceiverConfiguration();
     Receiver _rcvr;
