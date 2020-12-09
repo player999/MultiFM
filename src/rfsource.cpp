@@ -54,27 +54,27 @@ namespace DSP
         i = v;
     }
 
-    std::string &ConfigEntry::getName()
+    std::string ConfigEntry::getName() const
     {
         return name;
     }
 
-    ConfigType ConfigEntry::getType()
+    ConfigType ConfigEntry::getType() const
     {
         return type;
     }
 
-    std::string &ConfigEntry::getString()
+    std::string ConfigEntry::getString() const
     {
         return s;
     }
 
-    double ConfigEntry::getFloat()
+    double ConfigEntry::getFloat() const
     {
         return d;
     }
 
-    int64_t ConfigEntry::getInt()
+    int64_t ConfigEntry::getInt() const
     {
         return i;
     }
@@ -419,7 +419,7 @@ namespace DSP
         iq_queue->push(chunk);
     }
 
-    RfSource *createSource(std::list<ConfigEntry> &configs)
+    RfSource *createSource(const std::list<ConfigEntry> &configs)
     {
         auto source_type = std::find(configs.begin(), configs.end(), ConfigEntry("source_type"));
         if ("file" == source_type->getString())

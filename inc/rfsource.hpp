@@ -119,11 +119,11 @@ namespace DSP
             ConfigEntry(const std::string &n, const std::string &v);
             ConfigEntry(const std::string &n, double v);
             ConfigEntry(const std::string &n, int64_t i);
-            std::string &getName();
-            ConfigType getType();
-            std::string &getString();
-            double getFloat();
-            int64_t getInt();
+            std::string getName() const;
+            ConfigType getType() const;
+            std::string getString() const;
+            double getFloat() const;
+            int64_t getInt() const;
 
             std::string name;
             ConfigType type;
@@ -134,7 +134,7 @@ namespace DSP
         friend bool operator== (const ConfigEntry &c1, const ConfigEntry &c2);
     };
 
-    RfSource *createSource(std::list<ConfigEntry> &configs);
+    RfSource *createSource(const std::list<ConfigEntry> &configs);
 }
 
 #endif /*_RFSOURCE_HPP_*/

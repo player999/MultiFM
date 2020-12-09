@@ -218,28 +218,45 @@ static Error station_searching(queue<RfChunk> &q, double fs, double cf, vector<d
 
 void MainWindow::on_stopButton_clicked()
 {
+
+}
+
+void MainWindow::on_scanButton_clicked()
+{
+    static std::thread t;
     std::list<ConfigEntry> configs = getReceiverConfiguration();
     if(configs.empty())
     {
         return;
     }
     ui->stopButton->setEnabled(false);
-    RfSource *src = createSource(configs);
-    queue<RfChunk> data_queue;
-    vector<double> found_freqs;
-    src->registerQueue(&data_queue);
-    src->start();
-    Error err = station_searching(data_queue, (double) _fs, (double)_freq, found_freqs);
-    src->stop();
-    if(Error::SUCCESS == err)
-    {
-        _station_list.clear();
-        for(double f: found_freqs)
+    ui->startButton->setEnabled(false);
+    ui->scanButton->setEnabled(false);
+    t = std::thread([configs,this](){
+        RfSource *src = createSource(configs);
+        queue<RfChunk> data_queue;
+        vector<double> found_freqs;
+        src->registerQueue(&data_queue);
+        src->start();
+        Error err = station_searching(data_queue, (double) _fs, (double)_freq, found_freqs);
+        src->stop();
+        if(Error::SUCCESS == err)
         {
-            _station_list << QString::number(f, 'f', 0);
+            _station_list.clear();
+            for(double f: found_freqs)
+            {
+                _station_list << QString::number(f, 'f', 0);
+            }
+            _station_list_model->setStringList(_station_list);
         }
-        _station_list_model->setStringList(_station_list);
-    }
-    delete src;
-    ui->stopButton->setEnabled(true);
+        delete src;
+        ui->stopButton->setEnabled(true);
+        ui->scanButton->setEnabled(true);
+        ui->startButton->setEnabled(true);
+    });
+}
+
+void MainWindow::on_startButton_clicked()
+{
+
 }
