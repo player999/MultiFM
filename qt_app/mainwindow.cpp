@@ -8,6 +8,8 @@
 using namespace DSP;
 using namespace std;
 
+static bool gs_is_parallel = true;
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -189,6 +191,100 @@ std::list<ConfigEntry> MainWindow::getReceiverConfiguration()
     return conf;
 }
 
+bool MainWindow::wantStop() const
+{
+    return _please_stop;
+}
+
+template <class T> Error process_chunk_single_freq(FmReceiver<T> *receivers, vector<T> *i, vector<T> *q)
+{
+    if(receivers == NULL)
+    {
+        qDebug() << "The receiver was not created";
+        return FAIL;
+    }
+    return receivers->processChunk(i, q);
+}
+
+Error process_data(MainWindow *app, list<ConfigEntry> configuration, string mp3_prefix, double fs, double cf, vector<double> f)
+{
+#define EMPTY_CYCLE_COUNT (200)
+    Error  err;
+#if DEBUG_TRACE_CHUNK == 1
+    TracerTong tracer;
+#endif
+    vector<FmReceiver<double> *> receivers;
+    RfSource *fsrc = createSource(configuration);
+    queue<RfChunk> data_queue;
+    size_t empty_cycles = 0;
+    fsrc->registerQueue(&data_queue);
+    fsrc->start();
+
+
+    receivers.resize(f.size());
+    for(uint8_t ii = 0; ii < f.size(); ii++)
+    {
+        receivers[ii] = new FmReceiver<double>(mp3_prefix, fs, cf, f[ii]);
+    }
+
+    while(true)
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        empty_cycles++;
+        while(data_queue.size() > 0)
+        {
+            if(app->wantStop())
+            {
+                break;
+            }
+            RfChunk chunk = data_queue.front();
+            std::future<Error> fut[f.size()];
+
+            empty_cycles = 0;
+            for(uint8_t ii = 0; ii < f.size(); ii++)
+            {
+                if(false == gs_is_parallel)
+                {
+                    err = receivers[ii]->processChunk(&chunk.I, &chunk.Q);
+                    if(err != SUCCESS)
+                    {
+                        /* Error */
+                        break;
+                    }
+                }
+                else
+                {
+                    fut[ii] = async(process_chunk_single_freq<double>, receivers[ii], &chunk.I, &chunk.Q);
+                }
+            }
+
+            if(true == gs_is_parallel)
+            {
+                Error accumulated_error;
+                for(uint8_t ii = 0; ii < f.size(); ii++)
+                {
+                    Error err = fut[ii].get();
+                    if(SUCCESS != err)
+                    {
+                        accumulated_error = err;
+                    }
+                }
+                err = accumulated_error;
+            }
+            data_queue.pop();
+        }
+        if(empty_cycles == EMPTY_CYCLE_COUNT) break;
+    }
+
+    fsrc->stop();
+    delete fsrc;
+    for(uint8_t ii; ii < f.size(); ii++)
+    {
+        delete receivers[ii];
+    }
+    return err;
+}
+
 static Error station_searching(queue<RfChunk> &q, double fs, double cf, vector<double> &found_freqs)
 {
     Error err;
@@ -218,9 +314,43 @@ static Error station_searching(queue<RfChunk> &q, double fs, double cf, vector<d
     return err;
 }
 
+void MainWindow::setControlsEnabled(bool en)
+{
+    ui->startButton->setEnabled(en);
+    ui->scanButton->setEnabled(en);
+}
+
+void MainWindow::on_startButton_clicked()
+{
+    if(_rec_thread)
+    {
+        if(_rec_thread->joinable()) _rec_thread->join();
+        delete _rec_thread;
+        _rec_thread = NULL;
+    }
+
+    std::list<ConfigEntry> configs = getReceiverConfiguration();
+    if(configs.empty()) return;
+    std::vector<double> flist;
+    QModelIndexList selected = ui->stationList->selectionModel()->selectedIndexes();
+    for(const QModelIndex &fmodelidx: selected)
+    {
+        QString fstr = _station_list_model->data(fmodelidx).toString();
+        flist.push_back(fstr.toDouble());
+    }
+    setControlsEnabled(false);
+    _rec_thread = new std::thread([configs,flist,this](){
+        if(this->ui->prefixEdit->text().length() == 0) return;
+        this->_please_stop = false;
+        (void)process_data(this, configs, this->ui->prefixEdit->text().toStdString(),
+            this->_fs, this->_freq, flist);
+        this->setControlsEnabled(true);
+    });
+}
+
 void MainWindow::on_stopButton_clicked()
 {
-
+    this->_please_stop = true;
 }
 
 void MainWindow::on_scanButton_clicked()
@@ -257,9 +387,4 @@ void MainWindow::on_scanButton_clicked()
         ui->scanButton->setEnabled(true);
         ui->startButton->setEnabled(true);
     });
-}
-
-void MainWindow::on_startButton_clicked()
-{
-
 }

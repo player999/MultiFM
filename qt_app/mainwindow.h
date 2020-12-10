@@ -18,6 +18,8 @@ class MainWindow : public QMainWindow
 
 public:
     MainWindow(QWidget *parent = nullptr);
+    bool wantStop() const;
+    void setControlsEnabled(bool en);
     ~MainWindow();
 
 public slots:
@@ -34,7 +36,6 @@ private slots:
     void on_scanButton_clicked();
 
     void on_startButton_clicked();
-
 private:
     std::list<DSP::ConfigEntry> getReceiverConfiguration();
     Receiver _rcvr;
@@ -44,7 +45,9 @@ private:
     QDoubleValidator _val_freq;
     QStringListModel *_station_list_model;
     QStringList _station_list;
+    std::thread *_rec_thread = NULL;
 
+    bool _please_stop;
     bool _freq_valid;
     int64_t _freq;
     bool _fs_valid;
