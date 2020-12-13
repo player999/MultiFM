@@ -22,8 +22,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-cmake_minimum_required(VERSION 3.18)
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=znver2")
+cmake_minimum_required(VERSION 3.0)
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
 
 add_library(cutedsp SHARED filter.cpp mixer.cpp atan.cpp diff.cpp audio_encoder.cpp interleaving.cpp fft.cpp find_stations.cpp rfsource.cpp fm_receiver.cpp tracer_tong.cpp)
 target_link_libraries(cutedsp PUBLIC avcodec hackrf rtlsdr)
