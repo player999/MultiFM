@@ -31,7 +31,7 @@ target_include_directories(cutedsp PRIVATE ../inc)
 
 add_executable(filter_test cutedsp_test.cpp)
 target_include_directories(filter_test PRIVATE ../inc)
-target_link_libraries(filter_test PUBLIC cutedsp gtest)
+target_link_libraries(filter_test PUBLIC cutedsp pthread gtest)
 
 add_executable(multifm_console_app multifm_console_app.cpp)
 target_include_directories(multifm_console_app PRIVATE ../inc)
