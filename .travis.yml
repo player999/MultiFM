@@ -1,0 +1,15 @@
+services:
+  - docker
+
+before_install:
+  - docker build -t multifm_docker .
+
+script:
+  - docker run --name multifm_docker_container multifm_docker sh -c "git clone https://github.com/player999/MultiFM.git && cd MultiFM && ./build_all.sh"
+  - docker cp multifm_docker_container:/MultiFM/multifm.tar.gz .
+  - docker rm multifm_docker_container
+
+deploy:
+- provider: releases
+  file:
+  - multifm.tar.gz
