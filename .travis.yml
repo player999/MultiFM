@@ -10,6 +10,9 @@ script:
   - docker rm multifm_docker_container
 
 deploy:
-- provider: releases
-  file:
-  - multifm.tar.gz
+  provider: releases
+  api_key: "49bb12de7df50d58bcd2e963a8091b61aa18002e"
+  file: "multifm.tar.gz"
+  skip_cleanup: true
+  on:
+    tags: true
