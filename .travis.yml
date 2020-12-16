@@ -1,18 +1,17 @@
 services:
-  - docker
-
+- docker
 before_install:
-  - docker build -t multifm_docker .
-
+- docker build -t multifm_docker .
 script:
-  - docker run --name multifm_docker_container multifm_docker sh -c "git clone https://github.com/player999/MultiFM.git && cd MultiFM && ./build_all.sh"
-  - docker cp multifm_docker_container:/MultiFM/multifm.tar.gz .
-  - docker rm multifm_docker_container
-
+- docker run --name multifm_docker_container multifm_docker sh -c "git clone https://github.com/player999/MultiFM.git
+  && cd MultiFM && ./build_all.sh"
+- docker cp multifm_docker_container:/MultiFM/multifm.tar.gz .
+- docker rm multifm_docker_container
 deploy:
   provider: releases
-  api_key: "49bb12de7df50d58bcd2e963a8091b61aa18002e"
-  file: "multifm.tar.gz"
+  api_key:
+    secure: v4p2cF/tCnmYaPa0K/oXbqb/rMSxNcY7XFwNFodRvvCOKfG6+ADQ5FNmkpfaPnM/fkpFiwrUsLcmA7pkWIKxj4Uj1BZq0XgENxkB7DYx1QmUiib/9ksfaagN0nA72GxuMEWhkv1Ndp5C3wIdx7umC/2EJizsOn+fw5ciDdEcLzRfOUmpSmGj+iSRSqi7mr9uxjpATDaQ9pcoEalCpYkh6FanPQJ2Cqi+W4gvlT4VebvR/OywD79iYdwevdVvCjd2WiqVfKqENiaqSoo7ZErcLNxa6MP+i6mj3CqfkFM1dl7L15AYaqSmPCDIBoJf+Xyr1gem5UMWwXD9TseKaHQAyzV3WdHOQh0Ldsqc45QTEH7rD6iQII3FI7Nz9Bstc/0GpTCW8pvwdUHRVsuI5OPpjyfBjQHArdJX3uRNEg4tERkNF/vKF8DknJG18FhWY/WFs2xbf2HoYxRfpUKtI15Hhu4ppMGPaCRBMr2ShKRjpCmAuWwUkE/8CMoKWIUgh7m7Qa2Sm7Agx9mAhlEXxWDkBNNKIS5MPSJYig2CvIGeYl4UbTU3hvRA+z7dA3oBU4NhGHola1Wxy615d2r+YgJmXcNPMkP+LmKr+ckr/YxtY7RX3iU4kfSLJ69fAscR8OcZ+VOPSgsDXazTHrv2OpVaIBqOn5hxcpUsI4O4DudJ7hA=
+  file: multifm.tar.gz
   skip_cleanup: true
   on:
     tags: true
