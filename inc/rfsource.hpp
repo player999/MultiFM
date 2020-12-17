@@ -38,21 +38,33 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace DSP
 {
+    /*! Chunk of the RF data */
     struct RfChunk
     {
+        /** Signal I data */
         std::vector<double> I;
+        /** Signal Q data */
         std::vector<double> Q;
     };
 
+    /*! Abstract class which represents RF Source */
     class RfSource
     {
         public:
+            /** @brief Registers queue to which RF source puts signal it receives.
+             * @param[in] queue pointer to the queue to register
+             * */
             virtual void registerQueue(std::queue<RfChunk> *queue) = 0;
+            /** @brief Start receiving
+             * */
             virtual void start() = 0;
+            /** @brief Stop receiving
+             * */
             virtual void stop() = 0;
             virtual ~RfSource() = 0;
     };
 
+    /*! Instance of RF source. Receives data from file */
     class FileSource: public RfSource
     {
         public:
@@ -71,6 +83,7 @@ namespace DSP
             std::thread *read_thread;
     };
 
+    /*! Instance of RF source. Receives data from HackRF */
     class HackrfSource: public RfSource
     {
         public:
@@ -87,6 +100,7 @@ namespace DSP
             hackrf_device* device = NULL;
     };
 
+    /*! Instance of RF source. Receives data from RTL-SDR */
     class RtlSdrSource: public RfSource
     {
         public:
@@ -105,9 +119,13 @@ namespace DSP
 
     enum ConfigType
     {
+        /** String data */
         STRING,
+        /** Floating point data, is double */
         FLOAT,
+        /** Integer data, int64_t */
         INTEGER,
+        /** No type */
         NONE
     };
 

@@ -37,11 +37,24 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace DSP
 {
+    /*! Radio station receiver with writing demodulated signal to sink */
     template <class T> class FmReceiver
     {
         public:
+            /** @brief Constructor of FmReceiver class
+             * @param[in] mp3_suffix prefix to file name
+             * @param[in] fs sampling rate
+             * @param[in] cf center frequency
+             * @param[out] f frequency to receive. Must be in scope of bandwidth defined by sampling rate
+             * @return It is a constructor. Nothing returned.
+             * */
             FmReceiver(std::string mp3_suffix, double fs, double cf, double f);
             ~FmReceiver();
+            /** @brief Processor of the piece of data
+             * @param[in] buffer_i input I data
+             * @param[in] buffer_q input Q data
+             * @return Error code. #SUCCESS on success.
+             * */
             Error processChunk(const std::vector<T> *buffer_i, const std::vector<T> *buffer_q);
         private:
             double fs;

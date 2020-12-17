@@ -37,6 +37,7 @@ extern "C"
 
 namespace DSP
 {
+    /*! Class for compressing demodulated audio to MP3 */
     class AudioEncoder
     {
         public:
