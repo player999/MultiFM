@@ -32,38 +32,102 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace DSP
 {
+    /*! Filter type */
     enum FilterType
     {
+        /** Lowpass filter */
         FILTER_TYPE_LP,
+        /** Highpass filter */
         FILTER_TYPE_HP,
+        /** Bandpass filter */
         FILTER_TYPE_BP,
+        /** Custom filtering coefficient */
         FILTER_TYPE_CUSTOM,
     };
 
+    /*! Filter window */
     enum WindowFunction
     {
+        /** Bartlett window */
         BARTLETT,
+        /** Hanning window */
         HANNING,
+        /** Blackman window */
         BLACKMAN,
+        /** Hamming window */
         HAMMING,
+        /** Blackman-Harris window */
         BLACKMAN_HARRIS,
+        /** Blackman-Nuttal window */
         BLACKMAN_NUTTAL,
+        /** Nuttal window */
         NUTTAL,
     };
 
+    /*! FIR Filter class */
     template <class T> class FirFilter
     {
         public:
+            /** @brief FirFilter constructor, which creates filter from parameters.
+             * @param[in] ft filter type
+             * @param[in] fs sampling rate
+             * @param[in] f1 lower frequency
+             * @param[in] f2 upper frequency
+             * @param[in] order coefficient count in filter (it's order)
+             * */
             FirFilter(FilterType ft, T fs, T f1, T f2, uint32_t order);
+            /** @brief FirFilter constructor, which creates filter from parameters.
+             * @param[in] cfs array of filter coefficients
+             * */
             FirFilter(std::vector<double> &cfs);
+            /** @brief Return Window of given type and order
+             * @param[in] window_type Window type
+             * @param[in] order window size
+             * @param[out] window coefficients
+             * @return Error code. SUCCESS in case of success.
+             * */
             static Error getWindow(WindowFunction window_type, uint32_t order, T *coefficients);
+            /** @brief Execute filter for complex data
+             * @param[in] input_i I-data
+             * @param[in] input_q Q-data
+             * @param[out] output_i I-data
+             * @param[out] output_q Q-data
+             * @param[in] length - data length
+             * @return Error code. SUCCESS in case of success.
+             * */
             Error executeCpx(T *input_i, T *input_q, T *output_i, T *output_q, size_t length);
+            /** @brief Execute filter for complex data
+             * @param[in] input_i I-data
+             * @param[in] input_q Q-data
+             * @param[out] output_i I-data
+             * @param[out] output_q Q-data
+             * @param[in] decimation - decimate output data in 1 to 'decimation'.
+             * @param[in] length - data length
+             * @return Error code. SUCCESS in case of success.
+             * */
             Error executeCpxDecim(T *input_i, T *input_q, T *output_i, T *output_q, uint32_t decim, size_t length);
+            /** @brief Execute filter for floating point data
+             * @param[in] input data
+             * @param[out] output data
+             * @param[in] length - data length
+             * @return Error code. SUCCESS in case of success.
+             * */
             Error executeReal(T *input, T *output, size_t length);
+            /** @brief Execute filter for floating point data
+             * @param[in] input data
+             * @param[out] output data
+             * @param[in] decimation - decimate output data in 1 to 'decimation'.
+             * @param[in] length - data length
+             * @return Error code. SUCCESS in case of success.
+             * */
             Error executeRealDecim(T *input, T *output, uint32_t decim, size_t length);
+            /** Sampling rate */
             T sampling_rate;
+            /** Lower and upper frequencies */
             T f1, f2;
+            /** Filtering window */
             std::vector<T> window;
+            /** Filter coefficients */
             std::vector<T> coefficients;
         private:
             Error executeCpxFilter(T *input_i, T *input_q, T *output_i, T *output_q, uint32_t decimation, size_t length);
