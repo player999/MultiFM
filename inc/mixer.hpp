@@ -32,10 +32,24 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace DSP
 {
+    /*! RF mixer class */
     template <class T> class Mixer
     {
         public:
+            /** @brief Constructor to Mixer class
+             *  @param[in] fs sampling rate
+             *  @param[in] f frequency to mix with
+             *  @param[in] initial_length how many samples of 'f' to presynthesize
+             */
             Mixer(double fs, double f, size_t initial_length);
+            /** @brief mix method of Mixer class
+             *  @param [in] input_i input I-data
+             *  @param [in] input_q input Q-data
+             *  @param [out] output_i output I-data
+             *  @param [out] output_q output Q-data
+             *  @param [in] len length of the data
+             *  @return Error code. SUCCESS if no problems.
+             */
             Error mix(const T *input_i, const T *input_q, T *output_i, T *output_q, size_t len);
         private:
             Error resizeFrame(size_t initial_length);
