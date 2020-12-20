@@ -30,7 +30,20 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cstdlib>
 namespace DSP
 {
+    /** @brief Arctan from two cathetuses for double
+     *  @param [in] in_i I-data.
+     *  @param [in] in_q Q-data.
+     *  @param [out] omega resulting angles.
+     *  @param [in] len length of data
+     */
     Error ataniq(double *in_i, double *in_q, double *omega, size_t len);
+
+    /** @brief Arctan from two cathetuses for float
+     *  @param [in] in_i I-data.
+     *  @param [in] in_q Q-data.
+     *  @param [out] omega resulting angles.
+     *  @param [in] len length of data
+     */
     Error ataniq(float *in_i, float *in_q, float *omega, size_t len);
 }
 
