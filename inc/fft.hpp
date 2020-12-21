@@ -32,11 +32,29 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 namespace DSP
 {
+    /*! Fast fourier transform class */
     template <class T> class FFT
     {
         public:
+            /** Constructor for FFT class */
             FFT();
+            /** @brief Do FFT for 2^n signal size.
+             *  @param [in] input_i input I-data
+             *  @param [in] input_q input q-data
+             *  @param [out] output_i output I-data
+             *  @param [out] output_q output q-data
+             *  @param [in] length of the signal
+             *  @return Returns #SUCCESS on success.
+             */
             Error transform2(T *input_i, T *input_q, T *output_i, T *output_q, size_t length);
+            /** @brief Do inverse FFT for 2^n signal size.
+             *  @param [in] input_i input I-data
+             *  @param [in] input_q input q-data
+             *  @param [out] output_i output I-data
+             *  @param [out] output_q output q-data
+             *  @param [in] length of the signal
+             *  @return Returns #SUCCESS on success.
+             */
             Error inverse_transform2(T *input_i, T *input_q, T *output_i, T *output_q, size_t length);
             Error transform_bluestein(T *input_i, T *input_q, T *output_i, T *output_q, size_t length);
             Error inverse_transform_bluestein(T *input_i, T *input_q, T *output_i, T *output_q, size_t length);
