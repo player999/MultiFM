@@ -30,6 +30,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cstdlib>
 namespace DSP
 {
+    /** @brief Calculate differential of angles with output in range [-pi; +pi].
+     *  @param [in] omega angles
+     *  @param [out] domega differential
+     *  @param [in] len input length.
+     *  @return Returns error, #SUCCESS on success.
+     */
     Error diffangle(double *omega, double *domega, size_t len);
     Error diffangle(float *omega, float *domega, size_t len);
 }
