@@ -262,6 +262,7 @@ Error process_data(MainWindow *app, list<ConfigEntry> configuration, string mp3_
             {
                 break;
             }
+            app->statusBar()->showMessage("Chunks left to process: " + QString::number(data_queue.size()));
             RfChunk chunk = data_queue.front();
             std::future<Error> fut[f.size()];
 
